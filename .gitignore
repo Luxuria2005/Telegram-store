@@ -3,3 +3,6 @@ config.py
 settings.py
 local_settings.py
 .env
+
+#Remove Images
+products/
