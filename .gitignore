@@ -1,0 +1,5 @@
+# Ignore common Python config files
+config.py
+settings.py
+local_settings.py
+.env
