@@ -11,7 +11,6 @@ app.secret_key = 'your-secret-key-here-change-in-production'
 
 # Register the dashboard blueprint
 app.register_blueprint(dashboard_bp)
-askaks
 
 # Serve product images
 @app.route('/products/<path:filename>')
