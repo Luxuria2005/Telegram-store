@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة منتج جديد - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome@6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+    <style>
+        /* Enhanced Styles from all_orders.html */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --border: #e2e8f0;
+            --sidebar: #1e293b;
+            --sidebar-hover: #334155;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .compact-form {
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .product-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .variant-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        .variant-table th {
+            background: #f8f9fa;
+            padding: 8px 4px;
+            border: 1px solid #dee2e6;
+            font-weight: 600;
+            text-align: center;
+        }
+        .variant-table td {
+            padding: 4px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .size-input {
+            width: 60px;
+            text-align: center;
+            padding: 4px;
+            font-size: 0.85rem;
+        }
+        .color-row {
+            background: #f8fafc;
+        }
+        .image-preview {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+        .category-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .category-pill {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            border: 1px solid #bbdefb;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .category-pill:hover {
+            background: #1976d2;
+            color: white;
+        }
+        .category-pill.active {
+            background: #1976d2;
+            color: white;
+            border-color: #1976d2;
+        }
+        .form-compact {
+            padding: 8px;
+        }
+        .form-compact .form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .form-compact .form-control {
+            padding: 6px 8px;
+            font-size: 0.85rem;
+        }
+        .btn-compact {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        /* Mobile Responsiveness from all_orders.html */
+        @media (max-width: 768px) {
+            .compact-form {
+                max-height: none;
+                overflow-y: visible;
+            }
+            
+            .card-header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn {
+                margin-bottom: 0.25rem;
+                border-radius: 6px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content - FIXED: Updated to match dashboard.html structure -->
+            <main class="main-content">
+                <!-- Header - Updated to match dashboard.html -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 fw-bold"><i class="fas fa-plus-circle me-2"></i>إضافة منتج جديد</h1>
+                            <p class="text-muted mb-0">أضف منتج جديد إلى متجرك</p>
+                        </div>
+                        <div class="btn-toolbar">
+                            <a href="/products" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة إلى المنتجات
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="compact-form">
+                    <!-- Add Category Section -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white py-2">
+                            <i class="fas fa-folder-plus"></i> إضافة فئة جديدة
+                        </div>
+                        <div class="card-body form-compact">
+                            <form method="POST" action="/add_category">
+                                <div class="row align-items-end">
+                                    <div class="col-md-8">
+                                        <div class="mb-2">
+                                            <label class="form-label">اسم الفئة الجديدة</label>
+                                            <input type="text" class="form-control" name="category" required placeholder="أدخل اسم الفئة الجديدة">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="submit" class="btn btn-success w-100 btn-compact">
+                                            <i class="fas fa-plus"></i>
+                                            إضافة الفئة
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Category Pills -->
+                                {% if categories %}
+                                <div class="mt-2">
+                                    <label class="form-label">
+                                        <i class="fas fa-tags me-2"></i>
+                                        الفئات المتاحة:
+                                    </label>
+                                    <div class="category-pills">
+                                        {% for category in categories %}
+                                        <span class="category-pill" onclick="selectCategory('{{ category }}')">
+                                            <i class="fas fa-folder me-1"></i>{{ category }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning mt-2 py-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    لا توجد فئات مضافة حالياً. يرجى إضافة فئة أولاً.
+                                </div>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Add Product Form -->
+                    <div class="card">
+                        <div class="card-header bg-success text-white py-2">
+                            <i class="fas fa-cube"></i>
+                            إضافة منتج جديد
+                        </div>
+                        <div class="card-body form-compact">
+                            <form method="POST" action="{{ url_for('dashboard.add_product_route') }}" enctype="multipart/form-data" id="productForm">
+                                <input type="hidden" name="variant_count" id="variantCount" value="0">
+                                
+                                <!-- Product Basic Information -->
+                                <div class="product-header">
+                                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>المعلومات الأساسية</h5>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-2">
+                                            <label class="form-label">الفئة</label>
+                                            <select class="form-select" name="category" required id="categorySelect">
+                                                <option value="">اختر الفئة</option>
+                                                {% for category in categories %}
+                                                <option value="{{ category }}">{{ category }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-2">
+                                            <label class="form-label">اسم المنتج</label>
+                                            <input type="text" class="form-control" name="name" required placeholder="أدخل اسم المنتج" id="productName">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-2">
+                                            <label class="form-label">رقم الموديل</label>
+                                            <input type="text" class="form-control" name="model_number" placeholder="أدخل رقم الموديل">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <label class="form-label">السعر</label>
+                                            <input type="number" step="0.01" class="form-control" name="price" required placeholder="أدخل السعر" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <label class="form-label">الوصف</label>
+                                            <textarea class="form-control" name="description" rows="2" placeholder="أدخل وصف المنتج"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Variants Section - Spreadsheet Style -->
+                                <div class="product-header mt-3">
+                                    <h5 class="mb-0"><i class="fas fa-palette me-2"></i>الألوان والمقاسات</h5>
+                                </div>
+
+                                <div class="alert alert-info py-2">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>ملاحظة:</strong> أضف الألوان والمقاسات كما في المخطط. كل لون يحتاج إلى صورة واحدة فقط.
+                                </div>
+
+                                <div id="colorVariantsContainer">
+                                    <!-- Color variants will be added here -->
+                                </div>
+
+                                <div class="text-center mt-2">
+                                    <button type="button" class="btn btn-success btn-compact" onclick="addColorVariant()">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        إضافة لون جديد
+                                    </button>
+                                </div>
+
+                                <div class="alert alert-warning mt-3 py-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    يجب إضافة لون واحد على الأقل مع مقاساته للمنتج
+                                </div>
+                                
+                                <div class="d-grid gap-2 mt-3">
+                                    <button type="submit" class="btn btn-primary py-2" id="submitBtn">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        إضافة المنتج
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let colorCounter = 0;
+        const sizes = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+
+        function selectCategory(categoryName) {
+            const categorySelect = document.getElementById('categorySelect');
+            categorySelect.value = categoryName;
+            
+            // Highlight the selected category pill
+            document.querySelectorAll('.category-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function addColorVariant() {
+            const container = document.getElementById('colorVariantsContainer');
+            const colorId = colorCounter++;
+            
+            const colorHtml = `
+                <div class="card mb-3 color-variant-card" id="colorVariant-${colorId}">
+                    <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-palette me-2"></i>
+                            لون جديد
+                        </h6>
+                        <button type="button" class="btn btn-danger btn-sm btn-compact" onclick="removeColorVariant(${colorId})">
+                            <i class="fas fa-times"></i> حذف
+                        </button>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="row mb-2">
+                            <div class="col-md-3">
+                                <label class="form-label">اسم اللون</label>
+                                <input type="text" class="form-control color-name" name="color_${colorId}" placeholder="أدخل اسم اللون" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">صورة اللون</label>
+                                <input type="file" class="form-control color-image" name="variant_images_${colorId}" accept="image/*" onchange="previewColorImage(this, ${colorId})">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">معاينة</label>
+                                <div class="image-preview-container" id="colorImagePreview-${colorId}">
+                                    <img src="https://via.placeholder.com/50x50/cccccc/969696?text=صورة" class="image-preview" alt="معاينة">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">الكميات حسب المقاس:</label>
+                            </div>
+                        </div>
+
+                        <!-- Compact Sizes Table -->
+                        <div class="table-responsive">
+                            <table class="variant-table">
+                                <thead>
+                                    <tr>
+                                        ${sizes.map(size => `<th>${size}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        ${sizes.map((size, index) => `
+                                            <td>
+                                                <input type="number" class="form-control size-input" name="quantity_${colorId}_${index}" value="0" min="0" required>
+                                                <input type="hidden" name="size_${colorId}_${index}" value="${size}">
+                                            </td>
+                                        `).join('')}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', colorHtml);
+            document.getElementById('variantCount').value = colorCounter;
+            updateSubmitButton();
+        }
+
+        function removeColorVariant(id) {
+            const element = document.getElementById(`colorVariant-${id}`);
+            if (element) {
+                element.remove();
+                document.getElementById('variantCount').value = --colorCounter;
+                updateSubmitButton();
+            }
+        }
+
+        function previewColorImage(input, colorId) {
+            const previewContainer = document.getElementById(`colorImagePreview-${colorId}`);
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewContainer.innerHTML = `<img src="${e.target.result}" class="image-preview" alt="معاينة الصورة">`;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const variantCount = document.getElementById('variantCount').value;
+            
+            if (variantCount > 0) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-plus-circle me-2"></i> إضافة المنتج';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> يرجى إضافة لون واحد على الأقل';
+            }
+        }
+
+        // Form validation
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            const variantCount = document.getElementById('variantCount').value;
+            const category = document.getElementById('categorySelect').value;
+            const productName = document.getElementById('productName').value;
+            
+            if (!category) {
+                e.preventDefault();
+                alert('يرجى اختيار فئة للمنتج');
+                return false;
+            }
+            
+            if (!productName.trim()) {
+                e.preventDefault();
+                alert('يرجى إدخال اسم المنتج');
+                return false;
+            }
+            
+            if (variantCount == 0) {
+                e.preventDefault();
+                alert('يجب إضافة لون واحد على الأقل مع مقاساته للمنتج');
+                return false;
+            }
+        });
+
+        // Add one color variant by default
+        addColorVariant();
+    </script>
+</body>
+</html>

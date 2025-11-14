@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة العملاء - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 fw-bold"><i class="fas fa-users me-2"></i>إدارة العملاء</h1>
+                            <p class="text-muted mb-0">عرض وتصدير بيانات العملاء والتقارير</p>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-file-export me-2"></i>تصدير التقرير
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/export/customers/excel">
+                                    <i class="fas fa-file-excel text-success me-2"></i>Excel
+                                </a></li>
+                                <li><a class="dropdown-item" href="/export/customers/csv">
+                                    <i class="fas fa-file-csv text-info me-2"></i>CSV
+                                </a></li>
+                            </ul>
+                            <button class="btn btn-outline-primary ms-2" onclick="refreshCustomerData()">
+                                <i class="fas fa-sync-alt me-2"></i>تحديث
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Customer Stats -->
+                <div class="stats-grid compact-section">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-number text-info">{{ customers|length }}</div>
+                        <div class="stat-label">إجمالي العملاء</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="stat-number text-success">
+                            {{ customers|selectattr('total_orders', 'gt', 0)|list|length }}
+                        </div>
+                        <div class="stat-label">عملاء نشطين</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-number text-warning">
+                            {{ "{:,.0f}".format(customers|sum(attribute='total_spent')) }}
+                        </div>
+                        <div class="stat-label">إجمالي الإنفاق</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="stat-number" style="color: #8b5cf6;">
+                            {% if customers %}
+                                {{ "{:,.0f}".format((customers|max(attribute='total_spent')).total_spent) }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                        <div class="stat-label">أعلى عميل إنفاقاً</div>
+                    </div>
+                </div>
+
+                <!-- Customers Table -->
+                <div class="card compact-section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-list me-2"></i> قائمة العملاء</span>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm" id="customerSearch" placeholder="بحث في العملاء...">
+                            <select class="form-select form-select-sm" id="customerFilter" style="width: auto;">
+                                <option value="all">جميع العملاء</option>
+                                <option value="with_orders">عملاء نشطين</option>
+                                <option value="without_orders">عملاء بدون طلبات</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if customers %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="customersTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>معلومات العميل</th>
+                                        <th>رقم الهاتف</th> <!-- ✅ ADDED PHONE NUMBER COLUMN -->
+                                        <th>معرف التليجرام</th>
+                                        <th>إجمالي الطلبات</th>
+                                        <th>إجمالي الإنفاق</th>
+                                        <th>آخر طلب</th>
+                                        <th>تاريخ التسجيل</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for customer in customers %}
+                                    <tr data-orders="{{ customer.total_orders }}" data-spent="{{ customer.total_spent }}">
+                                        <td>{{ loop.index }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="customer-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                                <div>
+                                                    <strong class="d-block">
+                                                        {{ customer.first_name }} {{ customer.last_name }}
+                                                    </strong>
+                                                    <small class="text-muted">
+                                                        @{{ customer.username or 'بدون اسم مستخدم' }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <!-- ✅ ADDED PHONE NUMBER DISPLAY -->
+                                            {% if customer.phone and customer.phone != 'غير متوفر' %}
+                                                <span class="badge bg-info text-dark">
+                                                    <i class="fas fa-phone me-1"></i>{{ customer.phone }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-phone me-1"></i>غير متوفر
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <code>{{ customer.telegram_id }}</code>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if customer.total_orders > 0 else 'secondary' }}">
+                                                {{ customer.total_orders }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong class="text-success">{{ "{:,.0f}".format(customer.total_spent) }} $</strong>
+                                        </td>
+                                        <td>
+                                            {% if customer.last_order_date != 'لا توجد طلبات' %}
+                                                <small class="text-muted">{{ customer.last_order_date }}</small>
+                                            {% else %}
+                                                <span class="badge bg-secondary">لا توجد طلبات</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ customer.created_at }}</small>
+                                        </td>
+                                        <td>
+                                            {% if customer.total_orders > 5 %}
+                                                <span class="badge bg-success">عميل متميز</span>
+                                            {% elif customer.total_orders > 0 %}
+                                                <span class="badge bg-info">عميل نشط</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">عميل جديد</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Customer Analytics -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-chart-pie me-2"></i> توزيع العملاء
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="customerDistributionChart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-trophy me-2"></i> أفضل 5 عملاء
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="list-group">
+                                            {% for customer in customers[:5] %}
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ customer.first_name }} {{ customer.last_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-phone me-1"></i>{{ customer.phone or 'غير متوفر' }}
+                                                    </small>
+                                                    <br>
+                                                    <small class="text-muted">{{ customer.total_orders }} طلب</small>
+                                                </div>
+                                                <span class="badge bg-success rounded-pill">
+                                                    {{ "{:,.0f}".format(customer.total_spent) }} $
+                                                </span>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد بيانات عملاء حالياً</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row compact-section">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-file-excel fa-2x text-success mb-3"></i>
+                                <h5>تصدير Excel</h5>
+                                <p class="text-muted small">تصدير بيانات العملاء إلى Excel</p>
+                                <a href="/export/customers/excel" class="btn btn-success btn-sm">
+                                    <i class="fas fa-download me-2"></i>تحميل Excel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-file-csv fa-2x text-info mb-3"></i>
+                                <h5>تصدير CSV</h5>
+                                <p class="text-muted small">تصدير بيانات العملاء إلى CSV</p>
+                                <a href="/export/customers/csv" class="btn btn-info btn-sm">
+                                    <i class="fas fa-download me-2"></i>تحميل CSV
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-sync-alt fa-2x text-primary mb-3"></i>
+                                <h5>تحديث البيانات</h5>
+                                <p class="text-muted small">تحديث أحدث بيانات العملاء</p>
+                                <button class="btn btn-primary btn-sm" onclick="refreshCustomerData()">
+                                    <i class="fas fa-sync-alt me-2"></i>تحديث الآن
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize customer page functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCustomerCharts();
+            setupCustomerSearch();
+        });
+
+        function initializeCustomerCharts() {
+            // Customer Distribution Chart
+            const ctx = document.getElementById('customerDistributionChart').getContext('2d');
+            
+            const totalCustomers = {{ customers|length }};
+            const activeCustomers = {{ customers|selectattr('total_orders', 'gt', 0)|list|length }};
+            const newCustomers = totalCustomers - activeCustomers;
+            
+            const customerChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['عملاء نشطين', 'عملاء جدد'],
+                    datasets: [{
+                        data: [activeCustomers, newCustomers],
+                        backgroundColor: ['#28a745', '#ffc107'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const percentage = Math.round((value / totalCustomers) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function setupCustomerSearch() {
+            const searchInput = document.getElementById('customerSearch');
+            const customerFilter = document.getElementById('customerFilter');
+            const table = document.getElementById('customersTable');
+            
+            if (!searchInput || !customerFilter || !table) return;
+            
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filterType = customerFilter.value;
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const customerName = row.querySelector('td:nth-child(2) strong').textContent.toLowerCase();
+                    const username = row.querySelector('td:nth-child(2) small.text-muted').textContent.toLowerCase();
+                    const phone = row.querySelector('td:nth-child(3)').textContent.toLowerCase(); // ✅ ADDED PHONE SEARCH
+                    const totalOrders = parseInt(row.getAttribute('data-orders'));
+                    const totalSpent = parseFloat(row.getAttribute('data-spent'));
+                    
+                    const matchesSearch = customerName.includes(searchTerm) || username.includes(searchTerm) || phone.includes(searchTerm);
+                    let matchesFilter = true;
+                    
+                    if (filterType === 'with_orders') {
+                        matchesFilter = totalOrders > 0;
+                    } else if (filterType === 'without_orders') {
+                        matchesFilter = totalOrders === 0;
+                    }
+                    
+                    row.style.display = matchesSearch && matchesFilter ? '' : 'none';
+                });
+            }
+            
+            searchInput.addEventListener('input', filterTable);
+            customerFilter.addEventListener('change', filterTable);
+        }
+
+        function refreshCustomerData() {
+            const refreshBtn = event.target;
+            const originalText = refreshBtn.innerHTML;
+            
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
+            refreshBtn.disabled = true;
+            
+            // Simulate refresh (in real implementation, this would reload the page or fetch new data)
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+
+        // Export functions
+        function exportCustomerData(format) {
+            let url = '';
+            if (format === 'excel') {
+                url = '/export/customers/excel';
+            } else if (format === 'csv') {
+                url = '/export/customers/csv';
+            }
+            
+            if (url) {
+                window.location.href = url;
+            }
+        }
+    </script>
+</body>
+</html>

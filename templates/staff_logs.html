@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجلات الموظفين - LUXURIA FASHION</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 fw-bold"><i class="fas fa-clipboard-list me-2"></i>سجلات نشاط الموظفين</h1>
+                            <p class="text-muted mb-0">تتبع جميع أنشطة الموظفين في النظام مع تفاصيل كاملة</p>
+                        </div>
+                        <div class="alert alert-info mb-0" style="max-width: 300px;">
+                            <small><i class="fas fa-info-circle me-1"></i>يعرض: التغييرات التفصيلية، IP، القيم قبل/بعد</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>إجمالي الأنشطة</h5>
+                                <h2 class="mb-0">{{ stats.total_activities }}</h2>
+                                <small>آخر 30 يوم</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-tasks me-2"></i>أنواع الأنشطة</h5>
+                                <h2 class="mb-0">{{ stats.by_type|length }}</h2>
+                                <small>أنواع مختلفة</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-users me-2"></i>المستخدمين النشطين</h5>
+                                <h2 class="mb-0">{{ stats.by_user|length }}</h2>
+                                <small>آخر 30 يوم</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0"><i class="fas fa-filter me-2"></i>تصفية السجلات</h5>
+                            <!-- ✅ NEW: Export and Reset Buttons -->
+                            <div class="btn-group">
+                                <a href="/export-staff-logs?{{ request.query_string.decode('utf-8') }}" 
+                                   class="btn btn-success btn-sm">
+                                    <i class="fas fa-file-excel me-1"></i>تصدير إلى Excel
+                                </a>
+                                <button type="button" class="btn btn-warning btn-sm" onclick="resetFilters()">
+                                    <i class="fas fa-redo me-1"></i>إعادة التعيين
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" action="/staff-logs" class="row g-3" id="filterForm">
+                            <div class="col-md-3">
+                                <label class="form-label">المستخدم</label>
+                                <select name="user_id" class="form-select">
+                                    <option value="">جميع المستخدمين</option>
+                                    {% for user in all_users %}
+                                    <option value="{{ user.id }}" {% if current_user_id == user.id %}selected{% endif %}>
+                                        {{ user.full_name or user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">نوع النشاط</label>
+                                <select name="action_type" class="form-select">
+                                    <option value="">جميع الأنواع</option>
+                                    {% for action_type in action_types %}
+                                    <option value="{{ action_type }}" {% if current_action_type == action_type %}selected{% endif %}>
+                                        {{ action_type }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">من تاريخ</label>
+                                <input type="date" name="start_date" class="form-control" value="{{ current_start_date }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">إلى تاريخ</label>
+                                <input type="date" name="end_date" class="form-control" value="{{ current_end_date }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search me-2"></i>بحث
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Logs Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="fas fa-list me-2"></i>سجلات النشاط</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if logs %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>التاريخ والوقت</th>
+                                        <th>المستخدم</th>
+                                        <th>نوع النشاط</th>
+                                        <th>الوصف التفصيلي</th>
+                                        <th>الهدف</th>
+                                        <th>التغييرات والتفاصيل</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in logs %}
+                                    <tr>
+                                        <td>
+                                            <small>{{ log.created_at }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                                <div>
+                                                    <strong>{{ log.full_name or log.username }}</strong>
+                                                    <br><small class="text-muted">{{ log.username }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ log.action_type }}</span>
+                                        </td>
+                                        <td>{{ log.action_description }}</td>
+                                        <td>
+                                            {% if log.target_name %}
+                                            <strong>{{ log.target_type }}:</strong> {{ log.target_name }}
+                                            {% if log.target_id %}
+                                            <br><small class="text-muted">ID: {{ log.target_id }}</small>
+                                            {% endif %}
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if log.old_value or log.new_value %}
+                                            <div class="small">
+                                                {% if log.old_value %}
+                                                <div class="text-danger mb-1">
+                                                    <i class="fas fa-arrow-left"></i> <strong>قبل:</strong> {{ log.old_value }}
+                                                </div>
+                                                {% endif %}
+                                                {% if log.new_value %}
+                                                <div class="text-success">
+                                                    <i class="fas fa-arrow-right"></i> <strong>بعد:</strong> {{ log.new_value }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                            {% if log.ip_address %}
+                                            <br><small class="text-muted"><i class="fas fa-network-wired"></i> {{ log.ip_address }}</small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle me-2"></i>لا توجد سجلات متاحة
+                            <br><small class="mt-2 d-block">💡 نصيحة: قم بتسجيل الدخول أو تعديل منتج لرؤية السجلات التفصيلية</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ✅ NEW: Reset Filters Function
+        function resetFilters() {
+            // Reset form inputs
+            document.getElementById('filterForm').reset();
+            
+            // Redirect to clean URL without parameters
+            window.location.href = '/staff-logs';
+        }
+
+        // ✅ NEW: Show loading state for export
+        document.addEventListener('DOMContentLoaded', function() {
+            const exportBtn = document.querySelector('a[href*="export-staff-logs"]');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function(e) {
+                    // Show loading indicator
+                    const originalText = exportBtn.innerHTML;
+                    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري التصدير...';
+                    exportBtn.disabled = true;
+                    
+                    // Re-enable after 3 seconds in case of error
+                    setTimeout(() => {
+                        exportBtn.innerHTML = originalText;
+                        exportBtn.disabled = false;
+                    }, 3000);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

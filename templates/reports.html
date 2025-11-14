@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التقارير المتقدمة - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sold-out-row {
+            background-color: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+        }
+
+        .sold-out-badge {
+            background-color: #28a745 !important;
+            color: white !important;
+        }
+        
+        .sold-out-row:hover {
+            background-color: #ffeaa7 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 fw-bold"><i class="fas fa-chart-bar me-2"></i>التقارير المتقدمة</h1>
+                            <p class="text-muted mb-0">تحليلات شاملة لأداء المتجر والمبيعات والمخزون</p>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-file-export me-2"></i>تصدير التقارير
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/export/product_reports/excel">
+                                    <i class="fas fa-file-excel text-success me-2"></i>تقرير المنتجات (Excel)
+                                </a></li>
+                                <li><a class="dropdown-item" href="/export/inventory/excel">
+                                    <i class="fas fa-file-excel text-success me-2"></i>تقرير المخزون (Excel)
+                                </a></li>
+                                <li><a class="dropdown-item" href="/export/customers/excel">
+                                    <i class="fas fa-file-excel text-success me-2"></i>تقرير العملاء (Excel)
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/export/inventory/csv">
+                                    <i class="fas fa-file-csv text-info me-2"></i>تقرير المخزون (CSV)
+                                </a></li>
+                                <li><a class="dropdown-item" href="/export/customers/csv">
+                                    <i class="fas fa-file-csv text-info me-2"></i>تقرير العملاء (CSV)
+                                </a></li>
+                            </ul>
+                            <button class="btn btn-outline-primary ms-2" onclick="refreshReports()">
+                                <i class="fas fa-sync-alt me-2"></i>تحديث
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Summary Stats -->
+                <div class="stats-grid compact-section">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="stat-number text-info">{{ sales_analytics.total_recent_orders }}</div>
+                        <div class="stat-label">الطلبات (30 يوم)</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-number text-success">
+                            {{ "{:,.0f}".format(sales_analytics.top_selling_products[0].revenue if sales_analytics.top_selling_products else 0) }}
+                        </div>
+                        <div class="stat-label">أعلى منتج إيراداً</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="stat-number text-warning">{{ inventory_analytics.total_products }}</div>
+                        <div class="stat-label">إجمالي المنتجات</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-number" style="color: #8b5cf6;">
+                            {{ product_performance|length }}
+                        </div>
+                        <div class="stat-label">منتجات مفعلة</div>
+                    </div>
+                </div>
+
+                <!-- Sales Performance -->
+                <div class="row compact-section">
+                    <div class="col-md-8">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-trophy me-2"></i> أفضل المنتجات أداءً</span>
+                                <select class="form-select form-select-sm" id="performanceMetric" style="width: auto;" onchange="updatePerformanceChart()">
+                                    <option value="revenue">حسب الإيرادات</option>
+                                    <option value="quantity">حسب الكمية المباعة</option>
+                                </select>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="performanceChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-star me-2"></i> المنتجات الأكثر مبيعاً
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    {% for product in sales_analytics.top_selling_products[:5] %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong class="d-block">{{ product.name }}</strong>
+                                            <small class="text-muted">{{ product.color }} - {{ product.size }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-primary rounded-pill">{{ product.total_sold }}</span>
+                                            <br>
+                                            <small class="text-success">{{ "{:,.0f}".format(product.revenue) }}$</small>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-chart-line fa-2x text-muted mb-3"></i>
+                                        <p class="text-muted">لا توجد بيانات مبيعات حالياً</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Performance Reports -->
+                <div class="card compact-section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-chart-pie me-2"></i> تقارير أداء المنتجات</span>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm" id="reportSearch" placeholder="بحث في المنتجات...">
+                            <select class="form-select form-select-sm" id="reportFilter" style="width: auto;">
+                                <option value="all">جميع المنتجات</option>
+                                <option value="high_performance">أداء عالي</option>
+                                <option value="low_performance">أداء منخفض</option>
+                                <option value="sold_out">تم البيع بالكامل</option>
+                                <option value="out_of_stock">غير متوفر</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if product_performance %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="reportsTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>المنتج</th>
+                                        <th>الفئة</th>
+                                        <th>الكمية الأولية</th>
+                                        <th>المباع</th>
+                                        <th>المتبقي</th>
+                                        <th>معدل البيع</th>
+                                        <th>الإيرادات</th>
+                                        <th>الأداء</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in product_performance %}
+                                    <tr class="{% if product.remaining_quantity == 0 and product.sold_quantity > 0 %}sold-out-row{% endif %}"
+                                        data-category="{{ product.category }}" 
+                                        data-performance="{{ (product.sold_quantity/product.initial_quantity*100 if product.initial_quantity > 0 else 0)|round(1) }}" 
+                                        data-stock="{{ product.remaining_quantity }}"
+                                        data-sold-out="{% if product.remaining_quantity == 0 and product.sold_quantity > 0 %}true{% else %}false{% endif %}">
+                                        <td>{{ loop.index }}</td>
+                                        <td>
+                                            <strong>{{ product.name }}</strong>
+                                            {% if product.model_number and product.model_number != 'غير متوفر' %}
+                                            <br><small class="text-muted">{{ product.model_number }}</small>
+                                            {% endif %}
+                                            {% if product.remaining_quantity == 0 and product.sold_quantity > 0 %}
+                                            <br><span class="badge sold-out-badge">تم البيع بالكامل ✅</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ product.category }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ product.initial_quantity }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ product.sold_quantity }}</span>
+                                        </td>
+                                        <td>
+                                            {% if product.remaining_quantity == 0 and product.sold_quantity > 0 %}
+                                                <span class="badge sold-out-badge">0 ✅</span>
+                                            {% else %}
+                                                <span class="badge bg-{{ 'success' if product.remaining_quantity > 10 else 'warning' if product.remaining_quantity > 0 else 'danger' }}">
+                                                    {{ product.remaining_quantity }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if product.initial_quantity > 0 %}
+                                                {% set sell_through_rate = (product.sold_quantity / product.initial_quantity * 100)|round(1) %}
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar 
+                                                        {% if sell_through_rate > 70 %}bg-success
+                                                        {% elif sell_through_rate > 30 %}bg-warning
+                                                        {% else %}bg-danger{% endif %}" 
+                                                        style="width: {{ sell_through_rate }}%">
+                                                        {{ sell_through_rate }}%
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="badge bg-secondary">0%</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong class="text-success">{{ "{:,.0f}".format(product.total_revenue) }}$</strong>
+                                        </td>
+                                        <td>
+                                            {% if product.remaining_quantity == 0 and product.sold_quantity > 0 %}
+                                                <span class="badge sold-out-badge">تم البيع بالكامل</span>
+                                            {% elif product.initial_quantity > 0 %}
+                                                {% set performance_rate = (product.sold_quantity / product.initial_quantity * 100)|round(1) %}
+                                                {% if performance_rate > 70 %}
+                                                    <span class="badge bg-success">ممتاز</span>
+                                                {% elif performance_rate > 40 %}
+                                                    <span class="badge bg-warning">جيد</span>
+                                                {% elif performance_rate > 0 %}
+                                                    <span class="badge bg-info">مقبول</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">لم يباع</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-danger">لا يوجد مخزون</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="/products" class="btn btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="btn btn-outline-info" onclick="showProductDetails({{ product|tojson }})">
+                                                    <i class="fas fa-chart-bar"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Summary of Sold Out Products -->
+                        {% set sold_out_count = product_performance|selectattr('remaining_quantity', 'equalto', 0)|selectattr('sold_quantity', 'gt', 0)|list|length %}
+                        {% if sold_out_count > 0 %}
+                        <div class="alert alert-success mt-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-trophy fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="alert-heading">نجاح في المبيعات! 🎉</h6>
+                                    <p class="mb-0">هناك <strong>{{ sold_out_count }}</strong> منتج تم بيعه بالكامل - هذا مؤشر رائع على أداء المتجر!</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد بيانات أداء حالياً</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Inventory Analytics -->
+                <div class="row compact-section">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-box me-2"></i> تحليل المخزون
+                            </div>
+                            <div class="card-body">
+                                <canvas id="inventoryChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-exclamation-triangle me-2"></i> تنبيهات المخزون
+                            </div>
+                            <div class="card-body">
+                                <div class="alert-container">
+                                    {% set sold_out_count = product_performance|selectattr('remaining_quantity', 'equalto', 0)|selectattr('sold_quantity', 'gt', 0)|list|length %}
+                                    {% set out_of_stock_count = product_performance|selectattr('remaining_quantity', 'equalto', 0)|selectattr('sold_quantity', 'equalto', 0)|list|length %}
+                                    
+                                    {% if sold_out_count > 0 %}
+                                    <div class="alert alert-success">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-trophy me-3"></i>
+                                            <div>
+                                                <h6 class="alert-heading">منتجات مباعة بالكامل ✅</h6>
+                                                <p class="mb-0">هناك {{ sold_out_count }} منتج تم بيعه بالكامل - مؤشر نجاح!</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if inventory_analytics.low_stock_items > 0 %}
+                                    <div class="alert alert-warning">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-exclamation-triangle me-3"></i>
+                                            <div>
+                                                <h6 class="alert-heading">منتجات منخفضة المخزون</h6>
+                                                <p class="mb-0">هناك {{ inventory_analytics.low_stock_items }} عنصر بمخزون أقل من 5 قطع</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if out_of_stock_count > 0 %}
+                                    <div class="alert alert-danger">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-times-circle me-3"></i>
+                                            <div>
+                                                <h6 class="alert-heading">منتجات غير متوفرة</h6>
+                                                <p class="mb-0">هناك {{ out_of_stock_count }} منتج غير متوفر ولم يباع بعد</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if inventory_analytics.low_stock_items == 0 and out_of_stock_count == 0 and sold_out_count == 0 %}
+                                    <div class="alert alert-info">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-check-circle me-3"></i>
+                                            <div>
+                                                <h6 class="alert-heading">المخزون بحالة جيدة</h6>
+                                                <p class="mb-0">جميع المنتجات لديها مخزون كافي</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <h6>إحصائيات سريعة:</h6>
+                                    <div class="row text-center">
+                                        <div class="col-3">
+                                            <div class="border rounded p-2">
+                                                <div class="text-success fw-bold">{{ inventory_analytics.available_products }}</div>
+                                                <small>متاحة</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-3">
+                                            <div class="border rounded p-2">
+                                                <div class="text-warning fw-bold">{{ inventory_analytics.low_stock_items }}</div>
+                                                <small>منخفضة</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-3">
+                                            <div class="border rounded p-2">
+                                                <div class="text-danger fw-bold">{{ out_of_stock_count }}</div>
+                                                <small>غير متوفرة</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-3">
+                                            <div class="border rounded p-2">
+                                                <div class="text-success fw-bold">{{ sold_out_count }}</div>
+                                                <small>مباعة بالكامل</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="row compact-section">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-file-excel fa-2x text-success mb-3"></i>
+                                <h5>تقرير المنتجات</h5>
+                                <p class="text-muted small">تصدير أداء المنتجات إلى Excel</p>
+                                <a href="/export/product_reports/excel" class="btn btn-success btn-sm">
+                                    <i class="fas fa-download me-2"></i>تحميل Excel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-users fa-2x text-info mb-3"></i>
+                                <h5>تقرير العملاء</h5>
+                                <p class="text-muted small">تصدير بيانات العملاء إلى Excel</p>
+                                <a href="/export/customers/excel" class="btn btn-info btn-sm">
+                                    <i class="fas fa-download me-2"></i>تحميل Excel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-boxes fa-2x text-primary mb-3"></i>
+                                <h5>تقرير المخزون</h5>
+                                <p class="text-muted small">تصدير بيانات المخزون إلى Excel</p>
+                                <a href="/export/inventory/excel" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-download me-2"></i>تحميل Excel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Product Details Modal -->
+    <div class="modal fade" id="productDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productDetailsTitle">تفاصيل أداء المنتج</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="productDetailsContent">
+                    <!-- Content will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let performanceChart;
+        let inventoryChart;
+
+        // Initialize reports page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            setupReportsSearch();
+        });
+
+        function initializeCharts() {
+            // Performance Chart
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            
+            const topProducts = {{ sales_analytics.top_selling_products|tojson }};
+            const productNames = topProducts.slice(0, 5).map(p => p.name);
+            const revenues = topProducts.slice(0, 5).map(p => p.revenue);
+            const quantities = topProducts.slice(0, 5).map(p => p.total_sold);
+            
+            performanceChart = new Chart(performanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: productNames,
+                    datasets: [{
+                        label: 'الإيرادات ($)',
+                        data: revenues,
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'الكمية المباعة',
+                        data: quantities,
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y1',
+                        type: 'line'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'المنتجات'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'الإيرادات ($)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'الكمية المباعة'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            rtl: true
+                        }
+                    }
+                }
+            });
+
+            // Inventory Chart
+            const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+            const inventoryData = {{ inventory_analytics.category_stats|tojson }};
+            
+            const categories = Object.keys(inventoryData);
+            const variants = categories.map(cat => inventoryData[cat].total_variants || 0);
+            const lowStock = categories.map(cat => inventoryData[cat].low_stock || 0);
+            const outOfStock = categories.map(cat => inventoryData[cat].out_of_stock || 0);
+            
+            inventoryChart = new Chart(inventoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [
+                        {
+                            label: 'إجمالي المتغيرات',
+                            data: variants,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'منخفضة المخزون',
+                            data: lowStock,
+                            backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'منتهية المخزون',
+                            data: outOfStock,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'الفئات'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'عدد العناصر'
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            rtl: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePerformanceChart() {
+            const metric = document.getElementById('performanceMetric').value;
+            const topProducts = {{ sales_analytics.top_selling_products|tojson }};
+            
+            if (metric === 'revenue') {
+                performanceChart.data.datasets[0].data = topProducts.slice(0, 5).map(p => p.revenue);
+                performanceChart.data.datasets[0].label = 'الإيرادات ($)';
+                performanceChart.options.scales.y.title.text = 'الإيرادات ($)';
+            } else {
+                performanceChart.data.datasets[0].data = topProducts.slice(0, 5).map(p => p.total_sold);
+                performanceChart.data.datasets[0].label = 'الكمية المباعة';
+                performanceChart.options.scales.y.title.text = 'الكمية المباعة';
+            }
+            
+            performanceChart.update();
+        }
+
+        function setupReportsSearch() {
+            const searchInput = document.getElementById('reportSearch');
+            const reportFilter = document.getElementById('reportFilter');
+            const table = document.getElementById('reportsTable');
+            
+            if (!searchInput || !reportFilter || !table) return;
+            
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filterType = reportFilter.value;
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const productName = row.querySelector('td:nth-child(2) strong').textContent.toLowerCase();
+                    const modelNumber = row.querySelector('td:nth-child(2) small')?.textContent.toLowerCase() || '';
+                    const category = row.getAttribute('data-category');
+                    const performance = parseFloat(row.getAttribute('data-performance')) || 0;
+                    const stock = parseInt(row.getAttribute('data-stock')) || 0;
+                    const isSoldOut = row.getAttribute('data-sold-out') === 'true';
+                    
+                    const matchesSearch = productName.includes(searchTerm) || modelNumber.includes(searchTerm) || category.includes(searchTerm);
+                    let matchesFilter = true;
+                    
+                    if (filterType === 'high_performance') {
+                        matchesFilter = performance > 50;
+                    } else if (filterType === 'low_performance') {
+                        matchesFilter = performance <= 50 && performance > 0;
+                    } else if (filterType === 'sold_out') {
+                        matchesFilter = isSoldOut;
+                    } else if (filterType === 'out_of_stock') {
+                        matchesFilter = stock === 0 && !isSoldOut;
+                    }
+                    
+                    row.style.display = matchesSearch && matchesFilter ? '' : 'none';
+                });
+            }
+            
+            searchInput.addEventListener('input', filterTable);
+            reportFilter.addEventListener('change', filterTable);
+        }
+
+        function showProductDetails(product) {
+            const modalTitle = document.getElementById('productDetailsTitle');
+            const modalContent = document.getElementById('productDetailsContent');
+            
+            modalTitle.textContent = `تفاصيل أداء: ${product.name}`;
+            
+            const sellThroughRate = product.initial_quantity > 0 ? (product.sold_quantity / product.initial_quantity * 100).toFixed(1) : 0;
+            const averagePrice = product.sold_quantity > 0 ? (product.total_revenue / product.sold_quantity).toFixed(2) : product.price;
+            const isSoldOut = product.remaining_quantity === 0 && product.sold_quantity > 0;
+            
+            modalContent.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <i class="fas fa-info-circle me-2"></i> معلومات أساسية
+                            </div>
+                            <div class="card-body">
+                                <p><strong>الفئة:</strong> ${product.category}</p>
+                                <p><strong>رقم الموديل:</strong> ${product.model_number || 'غير متوفر'}</p>
+                                <p><strong>السعر:</strong> ${product.price}$</p>
+                                <p><strong>متوسط سعر البيع:</strong> ${averagePrice}$</p>
+                                ${isSoldOut ? '<p><span class="badge sold-out-badge">تم البيع بالكامل ✅</span></p>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header ${isSoldOut ? 'bg-success' : 'bg-info'} text-white">
+                                <i class="fas fa-chart-line me-2"></i> أداء المبيعات
+                            </div>
+                            <div class="card-body">
+                                <p><strong>الكمية الأولية:</strong> ${product.initial_quantity}</p>
+                                <p><strong>الكمية المباعة:</strong> ${product.sold_quantity}</p>
+                                <p><strong>الكمية المتبقية:</strong> ${product.remaining_quantity}</p>
+                                <p><strong>معدل البيع:</strong> ${sellThroughRate}%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-warning text-white">
+                                <i class="fas fa-dollar-sign me-2"></i> الأداء المالي
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center">
+                                    <h3 class="text-success">${product.total_revenue.toLocaleString('en-US')}$</h3>
+                                    <p class="text-muted">إجمالي الإيرادات</p>
+                                </div>
+                                <div class="progress mb-3" style="height: 25px;">
+                                    <div class="progress-bar 
+                                        ${sellThroughRate > 70 ? 'bg-success' : 
+                                          sellThroughRate > 30 ? 'bg-warning' : 'bg-danger'}" 
+                                        style="width: ${Math.min(sellThroughRate, 100)}%">
+                                        ${sellThroughRate}% معدل البيع
+                                    </div>
+                                </div>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <div class="fw-bold text-primary">${product.initial_quantity}</div>
+                                            <small>مخزون أولي</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <div class="fw-bold text-success">${product.sold_quantity}</div>
+                                            <small>مباع</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <div class="fw-bold ${isSoldOut ? 'text-success' : product.remaining_quantity > 10 ? 'text-info' : 'text-danger'}">${product.remaining_quantity}</div>
+                                            <small>${isSoldOut ? 'مباع بالكامل ✅' : 'متبقي'}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('productDetailsModal'));
+            modal.show();
+        }
+
+        function refreshReports() {
+            const refreshBtn = event.target;
+            const originalText = refreshBtn.innerHTML;
+            
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
+            refreshBtn.disabled = true;
+            
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+
+        // Export functions
+        function exportReport(type, format) {
+            let url = '';
+            
+            if (type === 'products') {
+                url = format === 'excel' ? '/export/product_reports/excel' : '/export/inventory/csv';
+            } else if (type === 'customers') {
+                url = format === 'excel' ? '/export/customers/excel' : '/export/customers/csv';
+            } else if (type === 'inventory') {
+                url = '/export/inventory/excel';
+            }
+            
+            if (url) {
+                window.location.href = url;
+            }
+        }
+    </script>
+</body>
+</html>

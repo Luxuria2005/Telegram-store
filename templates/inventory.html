@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المخزون المتقدمة - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 fw-bold">
+                                <i class="fas fa-boxes me-2"></i>
+                                {% if user_permissions.manage_inventory or user_role == 'admin' %}
+                                إدارة المخزون المتقدمة
+                                {% else %}
+                                عرض المخزون
+                                {% endif %}
+                            </h1>
+                            <p class="text-muted mb-0">
+                                {% if user_permissions.manage_inventory or user_role == 'admin' %}
+                                تحليلات متقدمة وإدارة المخزون
+                                {% else %}
+                                عرض وتحليل مخزون المنتجات
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="btn-group">
+                            <!-- Only show Export button if user has manage_inventory permission -->
+                            {% if user_permissions.manage_inventory or user_role == 'admin' %}
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-file-export me-2"></i>تصدير التقرير
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/export/inventory/excel">
+                                    <i class="fas fa-file-excel text-success me-2"></i>Excel
+                                </a></li>
+                                <li><a class="dropdown-item" href="/export/inventory/csv">
+                                    <i class="fas fa-file-csv text-info me-2"></i>CSV
+                                </a></li>
+                            </ul>
+                            {% endif %}
+                            <a href="/products" class="btn btn-outline-primary ms-2">
+                                <i class="fas fa-arrow-right me-2"></i>العودة للمنتجات
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Inventory Overview - FIXED: Show accurate product counts -->
+                <div class="stats-grid compact-section">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-tshirt"></i>
+                        </div>
+                        <div class="stat-number text-info">{{ inventory_analytics.total_products }}</div>
+                        <div class="stat-label">إجمالي المنتجات</div>
+                        <small class="text-muted">(جميع المنتجات المضيفة)</small>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-number text-success">{{ inventory_analytics.available_products }}</div>
+                        <div class="stat-label">منتجات متاحة</div>
+                        <small class="text-muted">(لديها مخزون متاح)</small>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <div class="stat-number text-danger">{{ inventory_analytics.unavailable_products }}</div>
+                        <div class="stat-label">منتجات غير متاحة</div>
+                        <small class="text-muted">(نفذ المخزون بالكامل)</small>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-number text-warning">{{ inventory_analytics.low_stock_items }}</div>
+                        <div class="stat-label">عناصر حرجة</div>
+                        <small class="text-muted">(أقل من 5 قطع)</small>
+                    </div>
+                </div>
+
+                <!-- Critical Stock Alerts (Only for stock < 5) -->
+                {% if stock_alerts.alerts %}
+                <div class="card compact-section">
+                    <div class="card-header bg-danger text-white">
+                        <i class="fas fa-bell me-2"></i> تنبيهات المخزون الحرجة (أقل من 5 قطع)
+                    </div>
+                    <div class="card-body">
+                        <div class="alert-container">
+                            {% for alert in stock_alerts.alerts %}
+                            <div class="alert alert-danger mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>{{ alert.product }}</strong>
+                                            <span class="badge bg-light text-dark ms-2">موديل: {{ alert.model_number }}</span>
+                                        </div>
+                                        <div class="row small text-muted">
+                                            <div class="col-md-3">
+                                                <i class="fas fa-palette me-1"></i>
+                                                اللون: {{ alert.color }}
+                                            </div>
+                                            <div class="col-md-2">
+                                                <i class="fas fa-ruler me-1"></i>
+                                                المقاس: {{ alert.size }}
+                                            </div>
+                                            <div class="col-md-3">
+                                                <i class="fas fa-boxes me-1"></i>
+                                                المخزون: <span class="fw-bold text-danger">{{ alert.current_stock }}</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <i class="fas fa-folder me-1"></i>
+                                                الفئة: {{ alert.category }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <!-- Only show Update button if user has manage_inventory permission -->
+                                        {% if user_permissions.manage_inventory or user_role == 'admin' %}
+                                        <a href="/products" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-edit me-1"></i> تحديث
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Current Inventory -->
+                <div class="card compact-section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-boxes me-2"></i> المخزون الحالي (الكميات المتاحة فقط)</span>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm" id="inventorySearch" placeholder="بحث في المخزون...">
+                            <select class="form-select form-select-sm" id="categoryFilter" style="width: auto;">
+                                <option value="all">جميع الفئات</option>
+                                {% for category in inventory_analytics.category_stats.keys() %}
+                                <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if filtered_inventory %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="inventoryTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>اسم المنتج</th>
+                                        <th>رقم الموديل</th>
+                                        <th>الفئة</th>
+                                        <th>اللون</th>
+                                        <th>المقاس</th>
+                                        <th>الكمية</th>
+                                        <th>السعر</th>
+                                        <th>الحالة</th>
+                                        <!-- Only show Actions column if user has manage_inventory permission -->
+                                        {% if user_permissions.manage_inventory or user_role == 'admin' %}
+                                        <th>الإجراءات</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set counter = 1 %}
+                                    {% for category, products in filtered_inventory.items() %}
+                                        {% for product in products %}
+                                            {% for variant in product.variants %}
+                                            <tr data-category="{{ category }}" data-product="{{ product.name|lower }}" data-model="{{ product.model_number|lower if product.model_number else '' }}">
+                                                <td>{{ counter }}</td>
+                                                <td>
+                                                    <strong>{{ product.name }}</strong>
+                                                    {% if product.description %}
+                                                    <br><small class="text-muted">{{ product.description[:50] }}{% if product.description|length > 50 %}...{% endif %}</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary">{{ product.model_number or 'غير متوفر' }}</span>
+                                                </td>
+                                                <td>{{ category }}</td>
+                                                <td>
+                                                    {% set color_code = get_color_code(variant.color) %}
+                                                    <span class="color-badge" style="background-color: {{ color_code }}; color: {% if color_code in ['#000000', '#6f42c1', '#795548', '#dc3545', '#198754', '#0d6efd'] %}white{% else %}black{% endif %}; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">
+                                                        {{ variant.color }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-dark">{{ variant.size }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'success' if variant.quantity > 20 else 'warning' if variant.quantity > 5 else 'danger' }}">
+                                                        {{ variant.quantity }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <strong class="text-success">{{ "{:,.0f}".format(product.price) }} </strong>
+                                                </td>
+                                                <td>
+                                                    {% if variant.quantity > 20 %}
+                                                        <span class="badge bg-success">ممتاز</span>
+                                                    {% elif variant.quantity > 10 %}
+                                                        <span class="badge bg-info">جيد</span>
+                                                    {% elif variant.quantity > 5 %}
+                                                        <span class="badge bg-warning">منخفض</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">حرج</span>
+                                                    {% endif %}
+                                                </td>
+                                                <!-- Only show Actions column if user has manage_inventory permission -->
+                                                {% if user_permissions.manage_inventory or user_role == 'admin' %}
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <!-- REMOVED: +5 and +10 buttons -->
+                                                        <a href="/edit_product/{{ category }}/{{ product.id }}" class="btn btn-outline-info">
+                                                            <i class="fas fa-edit"></i> تعديل
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                {% endif %}
+                                            </tr>
+                                            {% set counter = counter + 1 %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد عناصر في المخزون حالياً</p>
+                            <!-- Only show Add Product button if user has manage_products permission -->
+                            {% if user_permissions.manage_products or user_role == 'admin' %}
+                            <a href="/add-product" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>إضافة منتج جديد
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row compact-section">
+                    <!-- Low Stock Items -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-exclamation-triangle me-2"></i> عناصر منخفضة المخزون
+                                <div class="float-left">
+                                    <select class="form-select form-select-sm" id="lowStockThreshold" onchange="loadLowStock()" style="width: auto;">
+                                        <option value="5">أقل من 5</option>
+                                        <option value="10" selected>أقل من 10</option>
+                                        <option value="15">أقل من 15</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="lowStockItems">
+                                    <div class="text-center py-4">
+                                        <div class="loading-spinner"></div>
+                                        <p class="text-muted mt-2">جاري تحميل البيانات...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Charts -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-chart-pie me-2"></i> توزيع المخزون حسب الفئة
+                            </div>
+                            <div class="card-body">
+                                <canvas id="categoryChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <!-- Only show Quick Actions section if user has manage_inventory permission -->
+                {% if user_permissions.manage_inventory or user_role == 'admin' %}
+                <div class="row compact-section">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-sync-alt fa-2x text-primary mb-3"></i>
+                                <h5>تحديث المخزون</h5>
+                                <p class="text-muted small">تحديث كميات المخزون بسرعة</p>
+                                <button class="btn btn-primary btn-sm" onclick="showBulkUpdate()">
+                                    تحديث جماعي
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-chart-line fa-2x text-success mb-3"></i>
+                                <h5>تقارير المبيعات</h5>
+                                <p class="text-muted small">تحليل أداء المنتجات</p>
+                                <a href="/all-orders" class="btn btn-success btn-sm">
+                                    عرض التقارير
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-bell fa-2x text-warning mb-3"></i>
+                                <h5>التنبيهات</h5>
+                                <p class="text-muted small">إعدادات تنبيهات المخزون</p>
+                                <button class="btn btn-warning btn-sm" onclick="configureAlerts()">
+                                    إعداد التنبيهات
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bulk Update Modal - Only for users with manage_inventory permission -->
+    {% if user_permissions.manage_inventory or user_role == 'admin' %}
+    <div class="modal fade" id="bulkUpdateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">التحديث الجماعي للمخزون</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">نوع العملية</label>
+                        <select class="form-select" id="bulkOperation">
+                            <option value="add">إضافة كمية</option>
+                            <option value="set">تعيين كمية محددة</option>
+                            <option value="subtract">خصم كمية</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">القيمة</label>
+                        <input type="number" class="form-control" id="bulkValue" value="10" min="1">
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        سيتم تطبيق العملية على جميع العناصر المحددة في الجدول
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary" onclick="applyBulkUpdate()">تطبيق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load low stock items
+        function loadLowStock() {
+            const threshold = document.getElementById('lowStockThreshold').value;
+            const container = document.getElementById('lowStockItems');
+            
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="loading-spinner"></div>
+                    <p class="text-muted mt-2">جاري تحميل البيانات...</p>
+                </div>
+            `;
+
+            fetch(`/api/inventory/low_stock?threshold=${threshold}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.low_stock_items.length > 0) {
+                        let html = '<div class="list-group">';
+                        
+                        data.low_stock_items.forEach(item => {
+                            html += `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${item.product_name}</strong>
+                                        <br>
+                                        <small class="text-muted">موديل: ${item.model_number || 'غير متوفر'}</small>
+                                        <br>
+                                        <small class="text-muted">${item.color} - ${item.size}</small>
+                                        <br>
+                                        <small>الفئة: ${item.category}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-${item.current_stock === 0 ? 'danger' : 'warning'} mb-2">
+                                            ${item.current_stock}
+                                        </span>
+                                        <br>
+                                        <!-- Only show edit button if user has manage_inventory permission -->
+                                        {% if user_permissions.manage_inventory or user_role == 'admin' %}
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/products" class="btn btn-outline-info">
+                                                <i class="fas fa-edit"></i> تعديل
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        html += '</div>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                                <p class="text-muted">لا توجد عناصر منخفضة المخزون</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    container.innerHTML = `<div class="alert alert-danger">حدث خطأ في تحميل البيانات</div>`;
+                });
+        }
+
+        // Update stock quantity function removed since buttons are removed
+
+        // Initialize charts and functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLowStock();
+            initializeCharts();
+            setupSearchAndFilter();
+        });
+
+        function initializeCharts() {
+            // Category Distribution Chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            
+            // Prepare data for the chart
+            const categories = {{ inventory_analytics.category_stats.keys()|list|tojson }};
+            const variants = {{ inventory_analytics.category_stats.values()|map(attribute='total_variants')|list|tojson }};
+            
+            const categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: variants,
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function setupSearchAndFilter() {
+            const searchInput = document.getElementById('inventorySearch');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const table = document.getElementById('inventoryTable');
+            
+            if (!searchInput || !categoryFilter || !table) return;
+            
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const category = categoryFilter.value;
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const productName = row.getAttribute('data-product') || '';
+                    const modelNumber = row.getAttribute('data-model') || '';
+                    const rowCategory = row.getAttribute('data-category') || '';
+                    
+                    const matchesSearch = productName.includes(searchTerm) || modelNumber.includes(searchTerm);
+                    const matchesCategory = category === 'all' || rowCategory === category;
+                    
+                    row.style.display = matchesSearch && matchesCategory ? '' : 'none';
+                });
+            }
+            
+            searchInput.addEventListener('input', filterTable);
+            categoryFilter.addEventListener('change', filterTable);
+        }
+
+        function showBulkUpdate() {
+            // Check if user has permission to show bulk update
+            {% if not user_permissions.manage_inventory and user_role != 'admin' %}
+            alert('غير مصرح لك بتحديث المخزون');
+            return;
+            {% endif %}
+
+            const modal = new bootstrap.Modal(document.getElementById('bulkUpdateModal'));
+            modal.show();
+        }
+
+        function applyBulkUpdate() {
+            // Check if user has permission to apply bulk update
+            {% if not user_permissions.manage_inventory and user_role != 'admin' %}
+            alert('غير مصرح لك بتحديث المخزون');
+            return;
+            {% endif %}
+
+            const operation = document.getElementById('bulkOperation').value;
+            const value = parseInt(document.getElementById('bulkValue').value);
+            
+            alert(`سيتم تطبيق العملية "${operation}" بالقيمة ${value} على العناصر المحددة`);
+            // In real implementation, this would call a bulk update API
+            const modal = bootstrap.Modal.getInstance(document.getElementById('bulkUpdateModal'));
+            if (modal) modal.hide();
+        }
+
+        function configureAlerts() {
+            // Check if user has permission to configure alerts
+            {% if not user_permissions.manage_inventory and user_role != 'admin' %}
+            alert('غير مصرح لك بتعديل إعدادات التنبيهات');
+            return;
+            {% endif %}
+
+            alert('سيتم فتح إعدادات التنبيهات في التحديث القادم');
+        }
+    </script>
+</body>
+</html>

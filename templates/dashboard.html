@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ texts.dashboard_title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Compact Header -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 fw-bold">{{ texts.dashboard_title }}</h1>
+                            <p class="text-muted mb-0">مرحباً بك في لوحة تحكم متجرك</p>
+                        </div>
+                        <div class="btn-toolbar">
+                            <span class="text-muted fw-bold" id="current-time"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Stats Cards -->
+                <div class="stats-grid compact-section">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="stat-number text-info">{{ stats.total_orders }}</div>
+                        <div class="stat-label">{{ texts.total_orders }}</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-number text-warning">{{ stats.pending_orders }}</div>
+                        <div class="stat-label">{{ texts.pending_orders }}</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-number text-success">{{ stats.completed_orders }}</div>
+                        <div class="stat-label">{{ texts.completed_orders }}</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-number" style="color: #8b5cf6;">{{ "{:,.0f}".format(stats.total_revenue) }}</div>
+                        <div class="stat-label">{{ texts.total_revenue }}</div>
+                    </div>
+                </div>
+
+                <!-- Inventory Stats -->
+                <div class="stats-grid compact-section">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-tshirt"></i>
+                        </div>
+                        <div class="stat-number text-primary">{{ stats.total_products }}</div>
+                        <div class="stat-label">إجمالي المنتجات</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-number text-success">{{ stats.available_products }}</div>
+                        <div class="stat-label">منتجات متاحة</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <div class="stat-number text-danger">{{ stats.unavailable_products }}</div>
+                        <div class="stat-label">منتجات غير متاحة</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-number text-warning">{{ stats.low_stock_items }}</div>
+                        <div class="stat-label">عناصر حرجة (أقل من 5)</div>
+                    </div>
+                </div>
+
+                <!-- Quick Links - Show based on permissions -->
+                <div class="row compact-section">
+                    <div class="col-md-4 mb-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-shopping-bag fa-3x text-primary mb-3"></i>
+                                <h5 class="card-title">جميع الطلبات</h5>
+                                <p class="card-text text-muted">عرض وإدارة جميع طلبات المتجر</p>
+                                <a href="/all-orders" class="btn btn-primary">عرض الطلبات</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Show Products Management only if user has permission -->
+                    {% if user_permissions.get('view_products') or user_role == 'admin' %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-tshirt fa-3x text-success mb-3"></i>
+                                <h5 class="card-title">إدارة المنتجات</h5>
+                                <p class="card-text text-muted">عرض وتعديل منتجات المتجر</p>
+                                <a href="/products" class="btn btn-success">عرض المنتجات</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Show Add Product only if user has permission -->
+                    {% if user_permissions.get('manage_products') or user_role == 'admin' %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-plus-circle fa-3x text-info mb-3"></i>
+                                <h5 class="card-title">إضافة منتج</h5>
+                                <p class="card-text text-muted">إضافة منتج جديد إلى المتجر</p>
+                                <a href="/add-product" class="btn btn-info">إضافة منتج</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Critical Stock Alerts -->
+                {% if stock_alerts.alerts and stock_alerts.alerts|length > 0 %}
+                <div class="card compact-section">
+                    <div class="card-header bg-danger text-white">
+                        <i class="fas fa-exclamation-triangle me-2"></i> تنبيهات المخزون الحرجة (أقل من 5 قطع)
+                    </div>
+                    <div class="card-body">
+                        <div class="alert-container">
+                            {% for alert in stock_alerts.alerts[:3] %}
+                            <div class="alert alert-danger mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>{{ alert.product }}</strong>
+                                            <span class="badge bg-light text-dark ms-2">موديل: {{ alert.model_number }}</span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            {{ alert.color }} - {{ alert.size }} | المخزون: {{ alert.current_stock }} | الفئة: {{ alert.category }}
+                                        </div>
+                                    </div>
+                                    {% if user_permissions.get('manage_inventory') or user_role == 'admin' %}
+                                    <a href="/inventory" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-boxes me-1"></i> إدارة المخزون
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Orders section has been removed from dashboard -->
+                <!-- Users can still access orders through the "All Orders" page -->
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Order Details Modal has been removed from dashboard -->
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update current time
+            function updateTime() {
+                const now = new Date();
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                const timeString = now.toLocaleDateString('ar-EG', options);
+                const timeElement = document.getElementById('current-time');
+                if (timeElement) {
+                    timeElement.innerHTML = `<i class="fas fa-clock me-2"></i>${timeString}`;
+                }
+            }
+            setInterval(updateTime, 60000);
+            updateTime();
+
+            // Mobile menu toggle
+            const menuToggle = document.createElement('button');
+            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+            menuToggle.className = 'mobile-menu-toggle';
+            menuToggle.addEventListener('click', function() {
+                document.querySelector('.sidebar').classList.toggle('active');
+            });
+            document.body.appendChild(menuToggle);
+
+            // Show/hide mobile menu button based on screen size
+            function checkScreenSize() {
+                if (window.innerWidth < 992) {
+                    menuToggle.style.display = 'flex';
+                } else {
+                    menuToggle.style.display = 'none';
+                    document.querySelector('.sidebar').classList.remove('active');
+                }
+            }
+            
+            checkScreenSize();
+            window.addEventListener('resize', checkScreenSize();
+
+            // Order-related JavaScript has been removed since orders are no longer displayed on dashboard
+        });
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+    </script>
+</body>
+</html>

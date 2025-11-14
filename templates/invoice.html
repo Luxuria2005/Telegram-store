@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاتورة الطلب #{{ order.id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { 
+                font-size: 10pt;
+                font-family: 'Arial', sans-serif;
+                margin: 0;
+                padding: 0;
+            }
+            .container { 
+                max-width: 100% !important;
+                padding: 5px;
+                margin: 0;
+            }
+            .invoice-section {
+                margin-bottom: 10px;
+                page-break-inside: avoid;
+            }
+            .table {
+                font-size: 8pt;
+            }
+            .product-barcode img {
+                max-width: 170px;
+                height: 45px;
+            }
+            
+            /* ✅ FIXED: Print layout - force three columns */
+            .header-container {
+                display: flex !important;
+                justify-content: space-between !important;
+                flex-direction: row !important;
+                margin-bottom: 10px !important;
+                page-break-inside: avoid;
+            }
+            
+            .client-info-section {
+                flex: 0 0 35% !important;
+                text-align: right !important;
+                display: block !important;
+            }
+            
+            .order-info-section {
+                flex: 0 0 30% !important;
+                text-align: center !important;
+                display: block !important;
+                margin: 0 auto !important;
+            }
+            
+            .empty-section {
+                flex: 0 0 35% !important;
+                display: block !important;
+            }
+            
+            /* Hide mobile layout in print */
+            .client-info-section[style],
+            .order-info-section[style] {
+                order: unset !important;
+                width: auto !important;
+            }
+        }
+        
+        body { 
+            font-family: 'Arial', sans-serif;
+            background: white;
+            color: black;
+            line-height: 1.2;
+            font-size: 10pt;
+        }
+        
+        .invoice-header { 
+            border-bottom: 2px solid #333;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .store-info {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .store-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+        
+        .store-contact {
+            font-size: 9pt;
+            color: #666;
+            margin: 2px 0;
+        }
+        
+        .invoice-section {
+            margin-bottom: 10px;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 5px;
+            color: #020202;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 3px;
+        }
+        
+        .customer-info, .order-info {
+            background: #f9f9f9;
+            padding: 8px;
+            font-size: 9pt;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .table thead th {
+            background-color: #333 !important;
+            color: white !important;
+            border: 1px solid #333;
+            padding: 4px;
+            font-size: 8pt;
+            text-align: center;
+        }
+        
+        .table tbody td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            font-size: 8pt;
+            vertical-align: top;
+        }
+        
+        .total-section {
+            background: #f8f9fa;
+            padding: 8px;
+            border: 1px solid #333;
+            margin-top: 10px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        @media screen {
+            .container {
+                max-width: 800px;
+                margin: 10px auto;
+                padding: 10px;
+                background: white;
+                box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            }
+        }
+        
+        .product-details {
+            font-size: 7pt;
+            color: #666;
+            line-height: 1.1;
+        }
+        
+        .product-barcode {
+            text-align: center;
+            padding: 5px;
+            margin: 0 auto;
+        }
+        
+        .product-barcode img {
+            max-width: 220px;
+            height: 60px;     
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            border: 1px solid #eee;
+        }
+        
+        .barcode-text {
+            font-family: 'Courier New', monospace;
+            font-size: 7pt;
+            text-align: center;
+            margin-top: 2px;
+            font-weight: bold;
+            color: #333;
+            direction: ltr;
+            background: #f8f9fa;
+            padding: 2px;
+            border-radius: 2px;
+        }
+        
+        .compact-row {
+            margin-bottom: 5px;
+        }
+        
+        .info-table {
+            width: 100%;
+            font-size: 9pt;
+        }
+        
+        .info-table td {
+            padding: 2px;
+            vertical-align: top;
+        }
+
+        .location-info {
+            font-size: 8pt;
+            color: #555;
+            margin-top: 2px;
+        }
+        
+        .location-badge {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 7pt;
+            font-weight: bold;
+            margin: 1px;
+            display: inline-block;
+        }
+        
+        .permission-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .barcode-column {
+            width: 160px;
+            text-align: center;
+            vertical-align: middle !important;
+        }
+        
+        .product-code-column {
+            width: 100px;
+            text-align: center;
+        }
+
+        .qr-column {
+            width: 150px;
+            text-align: center;
+            vertical-align: middle !important;
+        }
+
+        .product-qr {
+            text-align: center;
+            padding: 5px;
+            margin: 0 auto;
+        }
+
+        .qr-image {
+            width: 120px;
+            height: 120px;
+            image-rendering: crisp-edges;
+            border: 1px solid #eee;
+        }
+
+        .qr-label {
+            font-family: 'Arial', sans-serif;
+            font-size: 8pt;
+            text-align: center;
+            margin-top: 3px;
+            font-weight: bold;
+            color: #333;
+            background: #f8f9fa;
+            padding: 3px;
+            border-radius: 2px;
+        }
+        
+        /* Three-column layout */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        
+        .client-info-section {
+            flex: 0 0 35%;
+            text-align: right;
+        }
+        
+        .order-info-section {
+            flex: 0 0 30%;
+            text-align: center;
+        }
+        
+        .empty-section {
+            flex: 0 0 35%;
+        }
+        
+        .store-header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .client-info-section,
+            .order-info-section,
+            .empty-section {
+                width: 100%;
+                flex: 1;
+            }
+            
+            .empty-section {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Print Button - Only show if user has permission -->
+        {% if session.get('permissions', {}).get('print_invoices') or session.get('role') == 'admin' %}
+        <div class="no-print mb-2 text-center">
+            <button class="btn btn-primary btn-sm" onclick="window.print()">
+                🖨️ طباعة الفاتورة
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="window.close()">
+                إغلاق النافذة
+            </button>
+        </div>
+        {% else %}
+        <!-- Show permission warning if user doesn't have access -->
+        <div class="permission-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>غير مصرح بالوصول:</strong> ليس لديك صلاحية طباعة الفواتير. يرجى التواصل مع مدير النظام.
+        </div>
+        {% endif %}
+
+        <!-- Store Information -->
+        <div class="store-header">
+            <div class="store-name">LUXURIA FASHION</div>
+            <div class="store-contact">
+                هاتف: 0944232394 | فاتورة #{{ order.id }}
+            </div>
+        </div>
+
+        <!-- Invoice Header -->
+        <div class="invoice-header">
+            <h4 style="margin: 5px 0; font-size: 14pt;">فاتورة بيع</h4>
+            <p style="margin: 2px 0; font-size: 9pt;">تاريخ الفاتورة: {{ order.order_date[:10] }}</p>
+        </div>
+
+        <!-- Three-column layout -->
+        <div class="header-container">
+            <!-- Client Information - RIGHT SIDE -->
+            <div class="client-info-section">
+                <div class="customer-info">
+                    <strong>معلومات العميل:</strong><br>
+                    الاسم: {{ order.user_name }}<br>
+                    الهاتف: {{ order.user_phone }}<br>
+                    العنوان: {{ order.user_address }}<br>
+                    {% if order.user_state %}
+                    <span class="location-info">
+                        المحافظة: <span class="location-badge">{{ order.user_state }}</span>
+                        {% if order.user_region %}
+                        - المنطقة: <span class="location-badge">{{ order.user_region }}</span>
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Order Information - MIDDLE SECTION -->
+            <div class="order-info-section">
+                <div class="order-info">
+                    <strong>معلومات الطلب:</strong><br>
+                    رقم الطلب: #{{ order.id }}<br>
+                    التاريخ: {{ order.order_date[:10] }}<br>
+                    الحالة: 
+                    {% if order.status in ['معلق', 'pending'] %}
+                        <span style="color: orange;">معلق</span>
+                    {% elif order.status in ['مؤكد', 'confirmed'] %}
+                        <span style="color: blue;">مؤكد</span>
+                    {% elif order.status in ['تم الشحن', 'shipped'] %}
+                        <span style="color: purple;">تم الشحن</span>
+                    {% elif order.status in ['تم التوصيل', 'delivered'] %}
+                        <span style="color: green;">تم التوصيل</span>
+                    {% else %}
+                        <span style="color: red;">ملغي</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Empty Space - LEFT SIDE -->
+            <div class="empty-section"></div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="invoice-section">
+            <div class="section-title">المنتجات المطلوبة</div>
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th width="3%">#</th>
+                        <th width="18%">اسم المنتج</th>
+                        <th width="10%">رقم الموديل</th>
+                        <th width="8%">اللون</th>
+                        <th width="8%">المقاس</th>
+                        <th width="8%">السعر</th>
+                        <th width="5%">الكمية</th>
+                        <th width="10%">المجموع</th>
+                        <th width="20%" class="barcode-column">باركود المنتج</th>
+                        <th width="20%" class="qr-column">كود QR للمنتج</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items_with_details %}
+                    <tr>
+                        <td class="text-center">{{ loop.index }}</td>
+                        <td>
+                            <strong>{{ item.product_name }}</strong>
+                        </td>
+                        <td class="text-center product-code-column">
+                            {{ item.model_number or "---" }}
+                        </td>
+                        <td class="text-center">
+                            {{ item.color or "---" }}
+                        </td>
+                        <td class="text-center">
+                            {{ item.size or "---" }}
+                        </td>
+                        <td class="text-center">{{ "{:,.0f}".format(item.price) }}</td>
+                        <td class="text-center">{{ item.quantity }}</td>
+                        <td class="text-center"><strong>{{ "{:,.0f}".format(item.price * item.quantity) }}</strong></td>
+                        
+                        <td class="barcode-column">
+                            {% if item.barcode_data and item.barcode_image %}
+                            <div class="product-barcode">
+                                <img src="{{ item.barcode_image }}" alt="باركود المنتج">
+                                <div class="barcode-text">{{ item.barcode_data }}</div>
+                            </div>
+                            {% else %}
+                            <div class="text-center" style="font-size: 7pt; color: #999;">لا يوجد باركود</div>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="qr-column">
+                            {% if item.qr_code_image %}
+                            <div class="product-qr">
+                                <img src="{{ item.qr_code_image }}" alt="QR كود المنتج" class="qr-image">
+                                <div class="qr-label">QR Code</div>
+                            </div>
+                            {% else %}
+                            <div class="text-center" style="font-size: 7pt; color: #999;">لا يوجد QR</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Order Total -->
+        <div class="total-section">
+            <table class="info-table">
+                <tr>
+                    <td width="70%"><strong>المجموع الكلي:</strong></td>
+                    <td width="30%" class="text-center"><strong>{{ "{:,.0f}".format(order.total_amount) }}</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>شكراً لشرائك من متجرنا | تاريخ الطباعة: {{ now.strftime('%Y-%m-%d') }}</p>
+            {% if order.user_state or order.user_region %}
+            <p class="location-info">
+                {% if order.user_state %}المحافظة: {{ order.user_state }}{% endif %}
+                {% if order.user_region %} - المنطقة: {{ order.user_region }}{% endif %}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const hasPrintPermission = {% if session.get('permissions', {}).get('print_invoices') or session.get('role') == 'admin' %}true{% else %}false{% endif %};
+            
+            if (hasPrintPermission) {
+                // window.print();
+            }
+        };
+    </script>
+</body>
+</html>

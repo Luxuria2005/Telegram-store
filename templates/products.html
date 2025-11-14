@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المنتجات - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+    <style>
+        /* Prevent horizontal scrolling on entire page */
+        body {
+            overflow-x: hidden;
+        }
+        .container-fluid {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .main-content {
+            overflow-x: hidden;
+        }
+        
+        .compact-grid {
+            max-height: 80vh;
+            overflow-y: auto;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            padding: 10px;
+        }
+        /* Custom vertical scrollbar */
+        .compact-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+        .compact-grid::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .compact-grid::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        .compact-grid::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .product-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+            margin-bottom: 15px;
+        }
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #3b82f6;
+        }
+        .variant-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+            margin-top: 4px;
+        }
+        .variant-table th {
+            background: #f8f9fa;
+            padding: 2px 1px;
+            border: 1px solid #dee2e6;
+            font-weight: 600;
+            text-align: center;
+        }
+        .variant-table td {
+            padding: 1px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .stock-badge {
+            padding: 1px 3px;
+            border-radius: 2px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+        .stock-good { background: #dcfce7; color: #166534; }
+        .stock-low { background: #fef3c7; color: #92400e; }
+        .stock-out { background: #fee2e2; color: #991b1b; }
+        
+        /* Image Carousel Styles - COMPACT */
+        .image-carousel {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+        }
+        .carousel-slide.active {
+            opacity: 1;
+        }
+        .carousel-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+        .carousel-controls {
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 3px;
+            z-index: 10;
+        }
+        .carousel-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .carousel-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+            font-size: 0.7rem;
+        }
+        .carousel-nav:hover {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        .carousel-prev {
+            right: 6px;
+        }
+        .carousel-next {
+            left: 6px;
+        }
+        .color-indicator {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-size: 0.6rem;
+            z-index: 10;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 3px;
+            padding: 4px;
+        }
+        .product-actions .btn {
+            flex: 1;
+            padding: 2px 4px;
+            font-size: 0.7rem;
+        }
+        .btn-compact {
+            padding: 2px 4px;
+            font-size: 0.7rem;
+        }
+        .color-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 1px 3px;
+            border-radius: 2px;
+            font-size: 0.6rem;
+            font-weight: 500;
+        }
+        
+        /* NEW: Compact product header layout */
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+        .product-info-right {
+            flex: 1;
+            text-align: right;
+            min-width: 0; /* Prevent flex item overflow */
+        }
+        .product-info-left {
+            text-align: left;
+            margin-left: 8px;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .product-name {
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+            line-height: 1.2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .product-model {
+            font-size: 0.65rem;
+            margin-bottom: 2px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .product-price {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #22c55e;
+            white-space: nowrap;
+        }
+        .product-description {
+            font-size: 0.65rem;
+            margin-bottom: 4px;
+            line-height: 1.2;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        /* Search Section Styles */
+        .search-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .search-input-group {
+            position: relative;
+        }
+        .search-input-group .form-control {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            height: 38px;
+        }
+        .search-stats {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #dee2e6;
+        }
+        
+        /* Notification button styles */
+        .btn-notify {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            color: white;
+            border: none;
+        }
+        .btn-notify:hover {
+            background: linear-gradient(135deg, #7c3aed, #9333ea);
+            color: white;
+            transform: translateY(-1px);
+        }
+        .btn-notify:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Notification status */
+        .notification-status {
+            font-size: 0.6rem;
+            padding: 1px 3px;
+            border-radius: 2px;
+            margin-top: 2px;
+        }
+        .status-sent {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        /* No images placeholder */
+        .no-images-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #64748b;
+        }
+        
+        /* Loading spinner for notification button */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            top: 50%;
+            left: 50%;
+            margin-left: -6px;
+            margin-top: -6px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-right-color: transparent;
+            animation: spin 0.75s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Hidden elements */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Compact product details */
+        .card-body.p-2 {
+            padding: 6px !important;
+        }
+        .variant-section {
+            margin-bottom: 6px;
+        }
+        .variant-section .small {
+            font-size: 0.6rem !important;
+        }
+        
+        /* Ensure row doesn't cause horizontal scroll */
+        .row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .category-products {
+            margin-left: -8px;
+            margin-right: -8px;
+        }
+        .category-products > [class*="col-"] {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 fw-bold">
+                                <i class="fas fa-tshirt me-2"></i>
+                                {% if user_permissions.manage_products or user_role == 'admin' %}
+                                إدارة المنتجات
+                                {% else %}
+                                عرض المنتجات
+                                {% endif %}
+                            </h1>
+                            <p class="text-muted mb-0">
+                                {% if user_permissions.manage_products or user_role == 'admin' %}
+                                إدارة وعرض جميع منتجات المتجر
+                                {% else %}
+                                عرض منتجات المتجر المتاحة
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <!-- Only show Add Product button if user has manage_products permission -->
+                            {% if user_permissions.manage_products or user_role == 'admin' %}
+                            <a href="/add-product" class="btn btn-primary btn-compact">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                إضافة منتج
+                            </a>
+                            {% endif %}
+                            
+                            <!-- Only show Bulk Notification button if user has manage_products permission -->
+                            {% if user_permissions.manage_products or user_role == 'admin' %}
+                            <button class="btn btn-success btn-compact" onclick="sendBulkNotifications()">
+                                <i class="fas fa-bullhorn me-2"></i>
+                                إشعار جماعي للمنتجات الجديدة
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Search Section -->
+                <div class="search-section">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="search-input-group">
+                                <input type="text" 
+                                    id="productSearch" 
+                                    class="form-control" 
+                                    placeholder="ابحث باسم المنتج، رقم الموديل، أو الوصف..."
+                                    onkeyup="filterProducts()">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="search-stats">
+                                <span id="searchStats">جارٍ تحميل المنتجات...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Notification Progress -->
+                <div id="bulkNotificationProgress" class="alert alert-info" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <div>
+                            <strong>جاري إرسال الإشعارات...</strong>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div id="bulkProgressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small id="bulkProgressText">0/0 منتج</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Results Message -->
+                <div id="noResults" class="no-results hidden">
+                    <i class="fas fa-search"></i>
+                    <h5>لم يتم العثور على منتجات</h5>
+                    <p class="text-muted">لا توجد منتجات تطابق بحثك. حاول استخدام كلمات بحث مختلفة.</p>
+                </div>
+
+                <!-- Products List -->
+                <div class="compact-grid" id="productsContainer">
+                    {% if products %}
+                        {% for category, product_list in products.items() %}
+                            {% if product_list %}
+                            <div class="category-section mb-4" data-category="{{ category }}">
+                                <div class="category-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-folder me-2"></i>
+                                            {{ category }}
+                                        </h5>
+                                        <span class="badge bg-light text-dark category-product-count">{{ product_list|length }} منتج</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="row category-products">
+                                    {% for product in product_list %}
+                                    <!-- 4 products per line on large screens -->
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-3 product-item" 
+                                         data-name="{{ product.name.lower() }}" 
+                                         data-model="{{ product.model_number.lower() if product.model_number else '' }}" 
+                                         data-description="{{ product.description.lower() if product.description else '' }}">
+                                        <div class="card h-100 product-card">
+                                            <!-- Image Carousel Section -->
+                                            <div class="image-carousel" id="carousel-{{ product.id }}">
+                                                <div class="carousel-inner">
+                                                    {% set color_images = [] %}
+                                                    {% for variant in product.variants %}
+                                                        {% if variant.image_path and variant.image_path not in ['None', 'null', ''] %}
+                                                            {% if variant.color not in color_images|map(attribute='color') %}
+                                                                {% set _ = color_images.append({
+                                                                    'color': variant.color,
+                                                                    'image_path': variant.image_path
+                                                                }) %}
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    
+                                                    {% if color_images %}
+                                                        {% for color_img in color_images %}
+                                                        <div class="carousel-slide {% if loop.first %}active{% endif %}" 
+                                                             data-color="{{ color_img.color }}">
+                                                            <img src="{{ url_for('serve_product_image', filename=color_img.image_path) }}" 
+                                                                 class="carousel-image" 
+                                                                 alt="{{ product.name }} - {{ color_img.color }}"
+                                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                            <div class="color-indicator">{{ color_img.color }}</div>
+                                                        </div>
+                                                        {% endfor %}
+                                                        
+                                                        <!-- Navigation Controls -->
+                                                        {% if color_images|length > 1 %}
+                                                        <button class="carousel-nav carousel-prev" onclick="prevSlide('carousel-{{ product.id }}')">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                        </button>
+                                                        <button class="carousel-nav carousel-next" onclick="nextSlide('carousel-{{ product.id }}')">
+                                                            <i class="fas fa-chevron-left"></i>
+                                                        </button>
+                                                        <div class="carousel-controls">
+                                                            {% for i in range(color_images|length) %}
+                                                            <button class="carousel-dot {% if loop.first %}active{% endif %}" 
+                                                                    onclick="goToSlide('carousel-{{ product.id }}', {{ i }})"></button>
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% endif %}
+                                                    {% else %}
+                                                    <div class="carousel-slide active">
+                                                        <div class="no-images-placeholder">
+                                                            <div class="text-center">
+                                                                <i class="fas fa-image fa-2x mb-2"></i>
+                                                                <div>لا توجد صور</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="card-body p-2">
+                                                <!-- NEW: Compact Header Layout -->
+                                                <div class="product-header">
+                                                    <div class="product-info-right">
+                                                        <h6 class="card-title fw-bold mb-0 product-name">{{ product.name }}</h6>
+                                                        {% if product.model_number %}
+                                                        <p class="text-muted mb-0 small product-model">
+                                                            <i class="fas fa-hashtag me-1"></i>
+                                                            {{ product.model_number }}
+                                                        </p>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="product-info-left">
+                                                        <div class="product-price">{{ "{:,.0f}".format(product.price) }} ل س</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {% if product.description and product.description != 'لا يوجد وصف' %}
+                                                <p class="card-text text-muted small mb-2 product-description">{{ product.description }}</p>
+                                                {% endif %}
+                                                
+                                                <!-- Variants Table -->
+                                                {% set color_groups = {} %}
+                                                {% for variant in product.variants %}
+                                                    {% if variant.quantity and variant.quantity > 0 %}
+                                                        {% if variant.color not in color_groups %}
+                                                            {% set _ = color_groups.update({variant.color: []}) %}
+                                                        {% endif %}
+                                                        {% set _ = color_groups[variant.color].append(variant) %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                
+                                                {% for color, variants in color_groups.items() %}
+                                                <div class="variant-section mb-1">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <span class="color-badge">{{ color }}</span>
+                                                        <span class="text-muted small">الكميات:</span>
+                                                    </div>
+                                                    
+                                                    {% set available_sizes = [] %}
+                                                    {% for variant in variants %}
+                                                        {% if variant.quantity and variant.quantity > 0 %}
+                                                            {% set _ = available_sizes.append(variant.size) %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    
+                                                    {% if available_sizes %}
+                                                    <table class="variant-table">
+                                                        <thead>
+                                                            <tr>
+                                                                {% for size in available_sizes %}
+                                                                <th>{{ size }}</th>
+                                                                {% endfor %}
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                {% for size in available_sizes %}
+                                                                    {% for variant in variants %}
+                                                                        {% if variant.size == size and variant.quantity > 0 %}
+                                                                            <td>
+                                                                                <span class="stock-badge {% if variant.quantity == 0 %}stock-out{% elif variant.quantity < 5 %}stock-low{% else %}stock-good{% endif %}">
+                                                                                    {{ variant.quantity }}
+                                                                                </span>
+                                                                            </td>
+                                                                        {% endif %}
+                                                                    {% endfor %}
+                                                                {% endfor %}
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    {% else %}
+                                                    <div class="text-center py-1">
+                                                        <small class="text-muted" style="font-size: 0.6rem;">لا توجد مقاسات متاحة</small>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="card-footer bg-transparent p-2">
+                                                <div class="product-actions">
+                                                    <!-- Edit Button - Only for users with manage_products permission -->
+                                                    {% if user_permissions.manage_products or user_role == 'admin' %}
+                                                    <a href="/edit_product/{{ category }}/{{ product.id }}" 
+                                                       class="btn btn-outline-primary btn-compact">
+                                                        <i class="fas fa-edit"></i>
+                                                        تعديل
+                                                    </a>
+                                                    {% endif %}
+                                                    
+                                                    <!-- Notification Button - Available for all users who can view products -->
+                                                    <button class="btn btn-notify btn-compact notify-product" 
+                                                            data-product-id="{{ product.id }}"
+                                                            data-product-name="{{ product.name }}"
+                                                            data-category="{{ category }}">
+                                                        <i class="fas fa-bullhorn"></i>
+                                                        إشعار
+                                                    </button>
+                                                    
+                                                    <!-- Delete Button - Only for users with manage_products permission -->
+                                                    {% if user_permissions.manage_products or user_role == 'admin' %}
+                                                    <a href="/delete_product/{{ category }}/{{ product.id }}" 
+                                                       class="btn btn-outline-danger btn-compact"
+                                                       onclick="return confirm('هل أنت متأكد من حذف المنتج {{ product.name }}؟')">
+                                                        <i class="fas fa-trash"></i>
+                                                        حذف
+                                                    </a>
+                                                    {% endif %}
+                                                </div>
+                                                <div id="notification-status-{{ product.id }}" class="notification-status" style="display: none;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% if not loop.last %}
+                            <hr class="my-3">
+                            {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tshirt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد منتجات مضافة</h5>
+                        <p class="text-muted mb-3">ابدأ بإضافة أول منتج إلى متجرك</p>
+                        <!-- Only show Add Product button if user has manage_products permission -->
+                        {% if user_permissions.manage_products or user_role == 'admin' %}
+                        <a href="/add-product" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            إضافة أول منتج
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Search and Filter functionality
+        function filterProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase().trim();
+            const productItems = document.querySelectorAll('.product-item');
+            const categorySections = document.querySelectorAll('.category-section');
+            const noResults = document.getElementById('noResults');
+            
+            let visibleProducts = 0;
+            let visibleCategories = 0;
+
+            // Show all if search is empty
+            if (searchTerm === '') {
+                productItems.forEach(item => {
+                    item.classList.remove('hidden');
+                    visibleProducts++;
+                });
+                
+                categorySections.forEach(section => {
+                    const categoryProducts = section.querySelectorAll('.product-item');
+                    const visibleInCategory = Array.from(categoryProducts).filter(item => !item.classList.contains('hidden')).length;
+                    
+                    if (visibleInCategory > 0) {
+                        section.classList.remove('hidden');
+                        section.querySelector('.category-product-count').textContent = `${visibleInCategory} منتج`;
+                        visibleCategories++;
+                    } else {
+                        section.classList.add('hidden');
+                    }
+                });
+            } else {
+                // Filter products based on search term
+                productItems.forEach(item => {
+                    const productName = item.getAttribute('data-name');
+                    const modelNumber = item.getAttribute('data-model');
+                    const description = item.getAttribute('data-description');
+                    
+                    const matchesSearch = productName.includes(searchTerm) || 
+                                         modelNumber.includes(searchTerm) || 
+                                         description.includes(searchTerm);
+                    
+                    if (matchesSearch) {
+                        item.classList.remove('hidden');
+                        visibleProducts++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                // Show/hide categories based on visible products
+                categorySections.forEach(section => {
+                    const categoryProducts = section.querySelectorAll('.product-item');
+                    const visibleInCategory = Array.from(categoryProducts).filter(item => !item.classList.contains('hidden')).length;
+                    
+                    if (visibleInCategory > 0) {
+                        section.classList.remove('hidden');
+                        section.querySelector('.category-product-count').textContent = `${visibleInCategory} منتج`;
+                        visibleCategories++;
+                    } else {
+                        section.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // Update search stats
+            updateSearchStats(visibleProducts, visibleCategories);
+            
+            // Show/hide no results message
+            if (visibleProducts === 0 && searchTerm !== '') {
+                noResults.classList.remove('hidden');
+                document.getElementById('productsContainer').classList.add('hidden');
+            } else {
+                noResults.classList.add('hidden');
+                document.getElementById('productsContainer').classList.remove('hidden');
+            }
+        }
+
+        function updateSearchStats(visibleProducts, visibleCategories) {
+            const searchStats = document.getElementById('searchStats');
+            const searchTerm = document.getElementById('productSearch').value.trim();
+            
+            if (searchTerm === '') {
+                searchStats.textContent = `عرض جميع المنتجات المتاحة`;
+            } else {
+                searchStats.textContent = `عرض ${visibleProducts} منتج في ${visibleCategories} فئة - نتائج البحث عن: "${searchTerm}"`;
+            }
+        }
+
+        // Initialize search stats on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const productItems = document.querySelectorAll('.product-item:not(.hidden)');
+            const categorySections = document.querySelectorAll('.category-section:not(.hidden)');
+            updateSearchStats(productItems.length, categorySections.length);
+        });
+
+        // Carousel functionality
+        function initCarousel(carouselId) {
+            const carousel = document.getElementById(carouselId);
+            const slides = carousel.querySelectorAll('.carousel-slide');
+            const dots = carousel.querySelectorAll('.carousel-dot');
+            let currentSlide = 0;
+
+            function showSlide(index) {
+                // Hide all slides
+                slides.forEach(slide => slide.classList.remove('active'));
+                dots.forEach(dot => dot.classList.remove('active'));
+                
+                // Show current slide
+                slides[index].classList.add('active');
+                dots[index].classList.add('active');
+                currentSlide = index;
+            }
+
+            function nextSlide() {
+                let next = currentSlide + 1;
+                if (next >= slides.length) next = 0;
+                showSlide(next);
+            }
+
+            function prevSlide() {
+                let prev = currentSlide - 1;
+                if (prev < 0) prev = slides.length - 1;
+                showSlide(prev);
+            }
+
+            // Auto-rotate every 5 seconds if multiple images
+            if (slides.length > 1) {
+                setInterval(nextSlide, 5000);
+            }
+
+            return { showSlide, nextSlide, prevSlide };
+        }
+
+        // Global functions for button clicks
+        function nextSlide(carouselId) {
+            const carousel = document.getElementById(carouselId);
+            const slides = carousel.querySelectorAll('.carousel-slide');
+            const dots = carousel.querySelectorAll('.carousel-dot');
+            let currentSlide = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+            
+            let next = currentSlide + 1;
+            if (next >= slides.length) next = 0;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            slides[next].classList.add('active');
+            dots[next].classList.add('active');
+        }
+
+        function prevSlide(carouselId) {
+            const carousel = document.getElementById(carouselId);
+            const slides = carousel.querySelectorAll('.carousel-slide');
+            const dots = carousel.querySelectorAll('.carousel-dot');
+            let currentSlide = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+            
+            let prev = currentSlide - 1;
+            if (prev < 0) prev = slides.length - 1;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            slides[prev].classList.add('active');
+            dots[prev].classList.add('active');
+        }
+
+        function goToSlide(carouselId, index) {
+            const carousel = document.getElementById(carouselId);
+            const slides = carousel.querySelectorAll('.carousel-slide');
+            const dots = carousel.querySelectorAll('.carousel-dot');
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
+        }
+
+        // Initialize all carousels when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const carousels = document.querySelectorAll('.image-carousel');
+            carousels.forEach(carousel => {
+                initCarousel(carousel.id);
+            });
+
+            // Add notification button event listeners
+            document.querySelectorAll('.notify-product').forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.dataset.productId;
+                    const productName = this.dataset.productName;
+                    const category = this.dataset.category;
+                    
+                    sendProductNotification(productId, productName, category, this);
+                });
+            });
+
+            // Focus search input on page load
+            document.getElementById('productSearch').focus();
+        });
+
+        // Send notification for single product
+        function sendProductNotification(productId, productName, category, button) {
+            if (!confirm(`هل تريد إرسال إشعار عن المنتج "${productName}" إلى جميع العملاء؟`)) {
+                return;
+            }
+
+            // Show loading state
+            const originalText = button.innerHTML;
+            button.innerHTML = '<div class="btn-loading"></div>';
+            button.disabled = true;
+
+            const statusElement = document.getElementById(`notification-status-${productId}`);
+            
+            fetch(`/api/send_notification/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusElement.textContent = `✅ تم الإرسال إلى ${data.sent_count} عميل`;
+                    statusElement.className = 'notification-status status-sent';
+                    statusElement.style.display = 'block';
+                    
+                    // Show success message
+                    showAlert('success', `تم إرسال إشعار المنتج "${productName}" إلى ${data.sent_count} عميل`);
+                } else {
+                    statusElement.textContent = '❌ فشل في الإرسال';
+                    statusElement.className = 'notification-status status-pending';
+                    statusElement.style.display = 'block';
+                    showAlert('error', data.message || 'فشل في إرسال الإشعار');
+                }
+            })
+            .catch(error => {
+                statusElement.textContent = '❌ خطأ في الاتصال';
+                statusElement.className = 'notification-status status-pending';
+                statusElement.style.display = 'block';
+                showAlert('error', 'حدث خطأ في الاتصال');
+            })
+            .finally(() => {
+                // Restore button state after 2 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            });
+        }
+
+        // Send bulk notifications for all products
+        function sendBulkNotifications() {
+            const products = document.querySelectorAll('.product-card');
+            if (products.length === 0) {
+                showAlert('warning', 'لا توجد منتجات لإرسال الإشعارات');
+                return;
+            }
+
+            if (!confirm(`هل تريد إرسال إشعارات عن جميع المنتجات (${products.length} منتج) إلى العملاء؟`)) {
+                return;
+            }
+
+            const progressElement = document.getElementById('bulkNotificationProgress');
+            const progressBar = document.getElementById('bulkProgressBar');
+            const progressText = document.getElementById('bulkProgressText');
+            
+            progressElement.style.display = 'block';
+            let completed = 0;
+            const total = products.length;
+
+            // Update progress
+            function updateProgress() {
+                completed++;
+                const percentage = (completed / total) * 100;
+                progressBar.style.width = `${percentage}%`;
+                progressText.textContent = `${completed}/${total} منتج`;
+                
+                if (completed === total) {
+                    setTimeout(() => {
+                        progressElement.style.display = 'none';
+                        showAlert('success', `تم إرسال الإشعارات لجميع المنتجات (${total} منتج)`);
+                    }, 1000);
+                }
+            }
+
+            // Send notification for each product with delay to avoid rate limiting
+            products.forEach((productCard, index) => {
+                setTimeout(() => {
+                    const productId = productCard.querySelector('.notify-product').dataset.productId;
+                    const productName = productCard.querySelector('.notify-product').dataset.productName;
+                    const category = productCard.querySelector('.notify-product').dataset.category;
+                    
+                    fetch(`/api/send_notification/${productId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const statusElement = document.getElementById(`notification-status-${productId}`);
+                            statusElement.textContent = `✅ تم الإرسال إلى ${data.sent_count} عميل`;
+                            statusElement.className = 'notification-status status-sent';
+                            statusElement.style.display = 'block';
+                        }
+                    })
+                    .finally(() => {
+                        updateProgress();
+                    });
+                }, index * 1000); // 1 second delay between notifications
+            });
+        }
+
+        // Show alert message
+        function showAlert(type, message) {
+            const alertClass = type === 'success' ? 'alert-success' : 
+                             type === 'error' ? 'alert-danger' : 
+                             type === 'warning' ? 'alert-warning' : 'alert-info';
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.querySelector('.main-content').insertBefore(alertDiv, document.querySelector('.search-section'));
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        function updateStock(category, productId, color, size, change) {
+            if (change < 0) {
+                const currentQuantity = parseInt(event.target.closest('.variant-item').querySelector('.stock-badge').textContent);
+                if (currentQuantity + change < 0) {
+                    alert('لا يمكن أن تكون الكمية أقل من الصفر');
+                    return;
+                }
+            }
+            
+            if (!confirm(`هل أنت متأكد من ${change > 0 ? 'زيادة' : 'تقليل'} المخزون؟`)) {
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('category', category);
+            formData.append('product_id', productId);
+            formData.append('color', color);
+            formData.append('size', size);
+            formData.append('quantity_change', change);
+            
+            fetch('/update_inventory', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('خطأ: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('حدث خطأ في الاتصال');
+            });
+        }
+    </script>
+</body>
+</html>

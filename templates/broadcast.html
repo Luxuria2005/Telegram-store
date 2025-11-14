@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام البث - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --border: #e2e8f0;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--gradient-primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.5rem;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-radius: 12px 12px 0 0 !important;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-lg);
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .notification-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-xl);
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .preview-card.has-content {
+            background: white;
+            border: 1px solid var(--border);
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .image-preview.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-header {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-bullhorn me-2"></i>
+                LUXURIA FASHION - نظام البث
+            </a>
+            <a href="/" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-arrow-right me-2"></i>
+                العودة للرئيسية
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number text-info">{{ all_users_count }}</div>
+                <div class="stat-label">إجمالي المستخدمين</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div class="stat-number text-success">{{ buyers_count }}</div>
+                <div class="stat-label">عملاء قاموا بالشراء</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-number text-warning">{{ non_buyers_count }}</div>
+                <div class="stat-label">مستخدمين جدد</div>
+            </div>
+        </div>
+
+        <!-- Broadcast Form -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-paper-plane me-2"></i> إرسال رسالة جماعية</h5>
+            </div>
+            <div class="card-body">
+                <form id="broadcastForm" enctype="multipart/form-data">
+                    <!-- Audience Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">👥 الجمهور المستهدف</label>
+                        <select class="form-select" id="audience" name="audience" required>
+                            <option value="all">جميع المستخدمين ({{ all_users_count }})</option>
+                            <option value="buyers">العملاء الذين قاموا بالشراء ({{ buyers_count }})</option>
+                            <option value="non_buyers">المستخدمين الذين لم يشتروا بعد ({{ non_buyers_count }})</option>
+                        </select>
+                        <div class="form-text">اختر الفئة التي تريد إرسال الرسالة إليها</div>
+                    </div>
+
+                    <!-- Message Input -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">💬 نص الرسالة</label>
+                        <textarea class="form-control" id="message" name="message" 
+                                  placeholder="اكتب رسالتك هنا... يمكنك استخدام Markdown للتنسيق مثل **عريض** أو _مائل_"
+                                  rows="6" required></textarea>
+                        <div class="form-text">
+                            يمكنك استخدام تنسيق Markdown:
+                            <code>**نص عريض**</code>, 
+                            <code>_نص مائل_</code>, 
+                            <code>[رابط](https://example.com)</code>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">🖼️ صورة مصاحبة (اختياري)</label>
+                        <input type="file" class="form-control" id="image" name="image" 
+                               accept="image/png, image/jpeg, image/jpg, image/gif">
+                        <div class="form-text">يمكنك إرفاق صورة مع الرسالة (PNG, JPG, GIF)</div>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">👁️ معاينة الرسالة</label>
+                        <div class="preview-card" id="previewCard">
+                            <div id="previewPlaceholder">
+                                <i class="fas fa-eye fa-2x mb-3 text-muted"></i>
+                                <p class="text-muted">ستظهر معاينة الرسالة هنا</p>
+                            </div>
+                            <div id="previewContent" style="display: none;">
+                                <div class="d-flex align-items-start mb-3">
+                                    <img id="previewImage" class="image-preview me-3" alt="معاينة الصورة">
+                                    <div class="flex-grow-1">
+                                        <div id="previewText" class="message-preview"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Send Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="sendButton">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            إرسال الرسالة
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> تعليمات الاستخدام</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check text-success me-2"></i>نصائح للرسائل الفعالة</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">✅ استخدم لغة واضحة ومباشرة</li>
+                            <li class="mb-2">✅ أضف عروض خاصة لجذب العملاء</li>
+                            <li class="mb-2">✅ استخدم الصور لجعل الرسالة جذابة</li>
+                            <li class="mb-2">✅ اختبر الرسالة قبل الإرسال</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-exclamation-triangle text-warning me-2"></i>ملاحظات هامة</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">⚠️ لا ترسل أكثر من 3 رسائل في اليوم</li>
+                            <li class="mb-2">⚠️ تجنب الإرسال في أوقات متأخرة</li>
+                            <li class="mb-2">⚠️ احترم خصوصية العملاء</li>
+                            <li class="mb-2">⚠️ تأكد من صحة المحتوى قبل الإرسال</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('broadcastForm');
+            const messageInput = document.getElementById('message');
+            const imageInput = document.getElementById('image');
+            const previewCard = document.getElementById('previewCard');
+            const previewPlaceholder = document.getElementById('previewPlaceholder');
+            const previewContent = document.getElementById('previewContent');
+            const previewText = document.getElementById('previewText');
+            const previewImage = document.getElementById('previewImage');
+            const sendButton = document.getElementById('sendButton');
+
+            // Update preview when message changes
+            messageInput.addEventListener('input', updatePreview);
+            imageInput.addEventListener('change', updatePreview);
+
+            function updatePreview() {
+                const message = messageInput.value.trim();
+                const imageFile = imageInput.files[0];
+
+                if (message || imageFile) {
+                    previewPlaceholder.style.display = 'none';
+                    previewContent.style.display = 'block';
+                    previewCard.classList.add('has-content');
+
+                    // Update text preview
+                    if (message) {
+                        previewText.innerHTML = formatMessage(message);
+                    } else {
+                        previewText.innerHTML = '<em class="text-muted">لا يوجد نص في الرسالة</em>';
+                    }
+
+                    // Update image preview
+                    if (imageFile) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            previewImage.src = e.target.result;
+                            previewImage.classList.add('show');
+                        };
+                        reader.readAsDataURL(imageFile);
+                    } else {
+                        previewImage.classList.remove('show');
+                    }
+                } else {
+                    previewPlaceholder.style.display = 'block';
+                    previewContent.style.display = 'none';
+                    previewCard.classList.remove('has-content');
+                }
+            }
+
+            function formatMessage(text) {
+                // Simple Markdown formatting
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/_(.*?)_/g, '<em>$1</em>')
+                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+                    .replace(/\n/g, '<br>');
+            }
+
+            // Form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const message = messageInput.value.trim();
+                const audience = document.getElementById('audience').value;
+
+                if (!message) {
+                    showNotification('error', 'يرجى إدخال نص الرسالة');
+                    return;
+                }
+
+                if (!confirm(`هل أنت متأكد من إرسال هذه الرسالة إلى ${getAudienceName(audience)}؟`)) {
+                    return;
+                }
+
+                // Show loading state
+                const originalText = sendButton.innerHTML;
+                sendButton.innerHTML = '<div class="loading-spinner"></div> جاري الإرسال...';
+                sendButton.disabled = true;
+
+                const formData = new FormData(form);
+
+                fetch('/api/send_broadcast', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('success', data.message);
+                        form.reset();
+                        updatePreview();
+                    } else {
+                        showNotification('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    showNotification('error', 'حدث خطأ في الاتصال بالخادم');
+                })
+                .finally(() => {
+                    sendButton.innerHTML = originalText;
+                    sendButton.disabled = false;
+                });
+            });
+
+            function getAudienceName(audience) {
+                const names = {
+                    'all': 'جميع المستخدمين',
+                    'buyers': 'العملاء الذين قاموا بالشراء',
+                    'non_buyers': 'المستخدمين الذين لم يشتروا بعد'
+                };
+                return names[audience];
+            }
+
+            function showNotification(type, message) {
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type} notification-alert`;
+                notification.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'}-circle me-2"></i>
+                        ${message}
+                    </div>
+                `;
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+            }
+
+            // Initialize preview
+            updatePreview();
+        });
+    </script>
+</body>
+</html>

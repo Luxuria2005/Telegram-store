@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جميع الطلبات - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ENHANCED: Beautiful Dropdown Styles - FIXED POSITIONING */
+        .table-responsive {
+            position: relative;
+            overflow: visible !important;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-toggle {
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #475569;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .dropdown-toggle:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .dropdown-toggle:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+            border-color: #6366f1;
+        }
+        
+        .dropdown-menu {
+            position: absolute !important;
+            z-index: 1000 !important;
+            min-width: 220px;
+            transform: none !important;
+            top: 100% !important;
+            right: 0 !important;
+            left: auto !important;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.05);
+            padding: 8px;
+            background: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dropdown-menu::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 12px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            transform: rotate(45deg);
+            border-top: 1px solid #e2e8f0;
+            border-left: 1px solid #e2e8f0;
+        }
+        
+        /* Ensure dropdowns work properly in tables */
+        .table td {
+            position: relative;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* ENHANCED: Beautiful Dropdown Items */
+        .dropdown-item {
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: right;
+            cursor: pointer;
+            color: #475569;
+            border-radius: 8px;
+            margin: 2px 0;
+            font-weight: 500;
+        }
+        
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            transform: translateX(-5px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        
+        .dropdown-item:active {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            transform: translateX(-3px);
+        }
+        
+        .dropdown-divider {
+            margin: 8px 0;
+            border-top: 1px solid #f1f5f9;
+            opacity: 0.6;
+        }
+        
+        /* Status-specific dropdown item colors */
+        .dropdown-item[data-status="confirmed"]:hover {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .dropdown-item[data-status="shipped"]:hover {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+        
+        .dropdown-item[data-status="delivered"]:hover {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+        }
+        
+        .dropdown-item.text-danger:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        /* Location Badges */
+        .location-badge {
+            background: linear-gradient(135deg, #e0f2fe, #38bdf8);
+            color: #0c4a6e;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .state-badge {
+            background: linear-gradient(135deg, #f0f9ff, #0ea5e9);
+            color: #0c4a6e;
+        }
+        
+        .region-badge {
+            background: linear-gradient(135deg, #f0fdf4, #22c55e);
+            color: #14532d;
+        }
+
+        /* FIXED: Mobile dropdowns with proper positioning */
+        @media (max-width: 768px) {
+            .dropdown-menu {
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: 90% !important;
+                max-width: 300px;
+            }
+            
+            .dropdown-menu::before {
+                display: none;
+            }
+        }
+
+        /* Rest of your existing styles... */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --border: #e2e8f0;
+            --sidebar: #1e293b;
+            --sidebar-hover: #334155;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            font-size: 14px;
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1.5rem;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 12px 12px 0 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        }
+
+        /* Compact Tables */
+        .table-responsive {
+            border-radius: 8px;
+            overflow: visible !important;
+        }
+
+        .table {
+            margin: 0;
+            font-size: 0.85rem;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .table tbody tr:hover td {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        }
+
+        /* Compact Status Badges */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow);
+        }
+
+        .status-pending { 
+            background: linear-gradient(135deg, #fef3c7, #f59e0b);
+            color: #92400e;
+        }
+        .status-confirmed { 
+            background: linear-gradient(135deg, #d1fae5, #10b981);
+            color: #065f46;
+        }
+        .status-shipped { 
+            background: linear-gradient(135deg, #dbeafe, #3b82f6);
+            color: #1e40af;
+        }
+        .status-delivered { 
+            background: linear-gradient(135deg, #dcfce7, #16a34a);
+            color: #166534;
+        }
+        .status-cancelled { 
+            background: linear-gradient(135deg, #fee2e2, #ef4444);
+            color: #991b1b;
+        }
+
+        /* Compact Buttons */
+        .btn {
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-lg);
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 992px) {
+            .container {
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .table-responsive {
+                font-size: 0.8rem;
+            }
+            
+            .card-header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .table td {
+                padding: 0.5rem 0.25rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .table {
+                font-size: 0.75rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn {
+                margin-bottom: 0.25rem;
+                border-radius: 6px !important;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Notification Styles */
+        .notification-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-xl);
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Custom dropdown show class */
+        .dropdown-menu.show {
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-store me-2"></i>
+                LUXURIA FASHION - جميع الطلبات
+            </a>
+            <a href="/" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-arrow-right me-2"></i>
+                العودة للرئيسية
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div class="stat-number text-info">{{ orders|length }}</div>
+                <div class="stat-label">إجمالي الطلبات</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number text-warning">
+                    {{ orders|selectattr("status", "in", ["معلق", "pending"])|list|length }}
+                </div>
+                <div class="stat-label">طلبات معلقة</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number text-success">
+                    {{ orders|selectattr("status", "in", ["مكتمل", "completed", "delivered", "تم التوصيل", "تم الشحن", "shipped"])|list|length }}
+                </div>
+                <div class="stat-label">طلبات مكتملة</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-number" style="color: #8b5cf6;">
+                    {{ "{:,.0f}".format(orders|sum(attribute="total_amount")) }}
+                </div>
+                <div class="stat-label">إجمالي الإيرادات</div>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-shopping-bag me-2"></i> جميع الطلبات</h5>
+                <div class="text-muted small">
+                    عرض {{ orders|length }} طلب
+                </div>
+            </div>
+            <div class="card-body">
+                {% if orders %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>العميل</th>
+                                <th>الهاتف</th>
+                                <th>المحافظة</th>
+                                <th>المنطقة</th>
+                                <th>العنوان</th>
+                                <th>التاريخ</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td><strong>#{{ order.order_id }}</strong></td>
+                                <td>
+                                    <div class="fw-bold">{{ order.user_name }}</div>
+                                    <small class="text-muted">{{ order.user_phone }}</small>
+                                </td>
+                                <td>{{ order.user_phone }}</td>
+                                <td>
+                                    {% if order.user_state %}
+                                        <span class="location-badge state-badge">{{ order.user_state }}</span>
+                                    {% else %}
+                                        <span class="text-muted">---</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if order.user_region %}
+                                        <span class="location-badge region-badge">{{ order.user_region }}</span>
+                                    {% else %}
+                                        <span class="text-muted">---</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ order.user_address[:40] }}{% if order.user_address|length > 40 %}...{% endif %}</small>
+                                </td>
+                                <td>{{ order.order_date[:10] }}</td>
+                                <td><span class="fw-bold text-success">{{ "{:,.0f}".format(order.total_amount) }}</span></td>
+                                <td>
+                                    {% if order.status in ['معلق', 'pending'] %}
+                                        <span class="status-badge status-pending">معلق</span>
+                                    {% elif order.status in ['مؤكد', 'confirmed'] %}
+                                        <span class="status-badge status-confirmed">مؤكد</span>
+                                    {% elif order.status in ['تم الشحن', 'shipped'] %}
+                                        <span class="status-badge status-shipped">تم الشحن</span>
+                                    {% elif order.status in ['تم التوصيل', 'delivered'] %}
+                                        <span class="status-badge status-delivered">تم التوصيل</span>
+                                    {% else %}
+                                        <span class="status-badge status-cancelled">ملغي</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary view-order" 
+                                                data-order-id="{{ order.order_id }}"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#orderModal">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" 
+                                                    data-bs-toggle="dropdown" 
+                                                    data-bs-auto-close="true"
+                                                    aria-expanded="false">
+                                                <i class="fas fa-cog"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item update-status" href="#" data-status="confirmed">
+                                                    <i class="fas fa-check text-success me-2"></i>تأكيد الطلب
+                                                </a></li>
+                                                <li><a class="dropdown-item update-status" href="#" data-status="shipped">
+                                                    <i class="fas fa-shipping-fast text-info me-2"></i>تم الشحن
+                                                </a></li>
+                                                <li><a class="dropdown-item update-status" href="#" data-status="delivered">
+                                                    <i class="fas fa-box text-primary me-2"></i>تم التوصيل
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <!-- ✅ FIXED: HIDE DELETE BUTTON FOR DELIVERED/SHIPPED ORDERS -->
+                                                    {% if order.status not in ['تم التوصيل', 'delivered', 'مكتمل', 'completed'] %}
+                                                    <a class="dropdown-item text-danger delete-order" 
+                                                       href="#" 
+                                                       data-order-id="{{ order.order_id }}"
+                                                       data-order-status="{{ order.status }}">
+                                                        <i class="fas fa-trash me-2"></i>حذف الطلب
+                                                    </a>
+                                                    {% else %}
+                                                    <a class="dropdown-item text-muted" 
+                                                       href="#" 
+                                                       style="cursor: not-allowed; opacity: 0.5;"
+                                                       title="لا يمكن حذف الطلب بعد التوصيل">
+                                                        <i class="fas fa-ban me-2"></i>غير متاح للحذف
+                                                    </a>
+                                                    {% endif %}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+                    <p class="text-muted fs-5">لا توجد طلبات</p>
+                    <a href="/" class="btn btn-primary mt-2">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة للرئيسية
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-shopping-bag"></i> تفاصيل الطلب #<span id="modalOrderId"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="orderDetails">
+                    <div class="text-center py-4">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">جاري تحميل تفاصيل الطلب...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Enhanced Orders Page Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap dropdowns with proper positioning
+            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl);
+            });
+
+            // ENHANCED: Better dropdown positioning for table cells
+            document.querySelectorAll('.dropdown-toggle').forEach(function(dropdownToggle) {
+                dropdownToggle.addEventListener('show.bs.dropdown', function (e) {
+                    var dropdownMenu = this.nextElementSibling;
+                    
+                    // Reset any previous positioning
+                    dropdownMenu.style.cssText = '';
+                    
+                    // Set proper positioning for table dropdowns
+                    if (this.closest('td')) {
+                        dropdownMenu.style.position = 'absolute';
+                        dropdownMenu.style.top = '100%';
+                        dropdownMenu.style.right = '0';
+                        dropdownMenu.style.left = 'auto';
+                        dropdownMenu.style.zIndex = '1000';
+                        dropdownMenu.style.minWidth = '220px';
+                        dropdownMenu.style.borderRadius = '12px';
+                        dropdownMenu.style.padding = '8px';
+                    }
+                });
+            });
+
+            // Status update handlers
+            document.querySelectorAll('.update-status').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const status = this.dataset.status;
+                    const orderId = this.closest('tr').querySelector('td:first-child strong').textContent.replace('#', '');
+                    
+                    if (confirm('هل أنت متأكد من تغيير حالة الطلب؟')) {
+                        const formData = new FormData();
+                        formData.append('order_id', orderId);
+                        formData.append('status', status);
+                        
+                        // Show loading
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<div class="loading-spinner"></div>';
+                        
+                        fetch('/update_order_status', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showNotification('success', data.message);
+                                setTimeout(() => location.reload(), 1000);
+                            } else {
+                                showNotification('error', data.message);
+                                this.innerHTML = originalText;
+                            }
+                        })
+                        .catch(error => {
+                            showNotification('error', 'حدث خطأ في الاتصال');
+                            this.innerHTML = originalText;
+                        });
+                    }
+                    
+                    // Close dropdown after click
+                    const dropdown = this.closest('.dropdown');
+                    const dropdownInstance = bootstrap.Dropdown.getInstance(dropdown.querySelector('.dropdown-toggle'));
+                    if (dropdownInstance) {
+                        dropdownInstance.hide();
+                    }
+                });
+            });
+
+            // ✅ FIXED: Delete order handlers with delivery protection
+            document.querySelectorAll('.delete-order').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const orderId = this.dataset.orderId;
+                    const orderStatus = this.dataset.orderStatus;
+                    
+                    // ✅ FIXED: SIMPLIFIED LOGIC - PREVENT deletion of delivered/completed orders only
+                    const protectedStatuses = ['تم التوصيل', 'delivered', 'مكتمل', 'completed'];
+                    const isProtected = protectedStatuses.some(status => 
+                        orderStatus && orderStatus.toLowerCase().includes(status.toLowerCase())
+                    );
+                    
+                    if (isProtected) {
+                        showNotification('error', '❌ لا يمكن حذف طلب تم توصيله');
+                        return;
+                    }
+                    
+                    if (confirm('⚠️ هل أنت متأكد من حذف هذا الطلب؟ سيتم استعادة الكميات إلى المخزون.')) {
+                        // Show loading state
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<div class="loading-spinner"></div>';
+                        
+                        setTimeout(() => {
+                            window.location.href = `/delete_order/${orderId}`;
+                        }, 500);
+                    }
+                    
+                    // Close dropdown after click
+                    const dropdown = this.closest('.dropdown');
+                    const dropdownInstance = bootstrap.Dropdown.getInstance(dropdown.querySelector('.dropdown-toggle'));
+                    if (dropdownInstance) {
+                        dropdownInstance.hide();
+                    }
+                });
+            });
+
+            // Order details loading
+            document.querySelectorAll('.view-order').forEach(button => {
+                button.addEventListener('click', function() {
+                    const orderId = this.dataset.orderId;
+                    loadOrderDetails(orderId);
+                });
+            });
+
+            console.log('🎯 Enhanced dropdowns initialized:', dropdownList.length);
+        });
+
+        // Load order details
+        function loadOrderDetails(orderId) {
+            const modalBody = document.getElementById('orderDetails');
+            modalBody.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="loading-spinner"></div>
+                    <p class="text-muted mt-2">جاري تحميل تفاصيل الطلب...</p>
+                </div>
+            `;
+
+            document.getElementById('modalOrderId').textContent = orderId;
+
+            fetch(`/api/order/${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const order = data.order;
+                        let itemsHtml = '';
+                        
+                        if (order.items && Array.isArray(order.items)) {
+                            order.items.forEach(item => {
+                                const itemName = item.name || 'غير معروف';
+                                const itemPrice = item.price || 0;
+                                const itemQuantity = item.quantity || 0;
+                                const itemTotal = (itemPrice * itemQuantity);
+                                
+                                itemsHtml += `
+                                    <div class="order-item p-3 mb-3 border rounded">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong class="fs-6">${itemName}</strong>
+                                            <span class="text-success fw-bold">${Math.round(itemTotal).toLocaleString('en-US')}</span>
+                                        </div>
+                                        <div class="row text-muted small">
+                                            <div class="col-md-6">
+                                                <span>السعر: ${Math.round(itemPrice).toLocaleString('en-US')}</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <span>الكمية: ${itemQuantity}</span>
+                                            </div>
+                                            ${item.size ? `<div class="col-md-6"><span>المقاس: ${item.size}</span></div>` : ''}
+                                            ${item.color ? `<div class="col-md-6"><span>اللون: ${item.color}</span></div>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            itemsHtml = '<p class="text-muted text-center">لا توجد عناصر</p>';
+                        }
+
+                        const userName = order.user_name || 'غير معروف';
+                        const userPhone = order.user_phone || 'غير معروف';
+                        const userAddress = order.user_address || 'غير معروف';
+                        const userState = order.user_state || 'غير محدد';
+                        const userRegion = order.user_region || 'غير محدد';
+                        const orderDate = order.order_date || 'غير معروف';
+                        const orderStatus = order.status || 'معلق';
+                        const totalAmount = order.total_amount ? Math.round(order.total_amount).toLocaleString('en-US') : "0";
+
+                        modalBody.innerHTML = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-card p-3 border rounded mb-3">
+                                        <h6 class="fw-bold mb-3"><i class="fas fa-user me-2"></i>معلومات العميل</h6>
+                                        <p><strong>الاسم:</strong> ${userName}</p>
+                                        <p><strong>الهاتف:</strong> ${userPhone}</p>
+                                        <p><strong>العنوان:</strong> ${userAddress}</p>
+                                        <p><strong>المحافظة:</strong> ${userState}</p>
+                                        <p><strong>المنطقة:</strong> ${userRegion}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-card p-3 border rounded mb-3">
+                                        <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>معلومات الطلب</h6>
+                                        <p><strong>التاريخ:</strong> ${orderDate}</p>
+                                        <p><strong>الحالة:</strong> <span class="status-badge status-${getStatusClass(orderStatus)}">${orderStatus}</span></p>
+                                        <p><strong>المجموع:</strong> <span class="fw-bold text-success fs-5">${totalAmount}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <h6 class="fw-bold mb-3"><i class="fas fa-list me-2"></i>العناصر المطلوبة</h6>
+                            ${itemsHtml}
+                        `;
+                    } else {
+                        modalBody.innerHTML = `
+                            <div class="alert alert-danger text-center">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                ${data.message || 'لم يتم العثور على تفاصيل الطلب'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    modalBody.innerHTML = `
+                        <div class="alert alert-danger text-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            حدث خطأ في تحميل تفاصيل الطلب
+                        </div>
+                    `;
+                });
+        }
+
+        function getStatusClass(status) {
+            const statusMap = {
+                'معلق': 'pending',
+                'pending': 'pending',
+                'مؤكد': 'confirmed', 
+                'confirmed': 'confirmed',
+                'تم الشحن': 'shipped',
+                'shipped': 'shipped',
+                'تم التوصيل': 'delivered',
+                'delivered': 'delivered'
+            };
+            return statusMap[status] || 'cancelled';
+        }
+
+        // Notification system
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} notification-alert`;
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}-circle me-2"></i>
+                    ${message}
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المحاسبة - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .accounting-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .quick-date-btn {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-date-btn:hover {
+            background: #f8f9fa;
+            border-color: #6366f1;
+        }
+        
+        .quick-date-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+        
+        .location-badge {
+            background: linear-gradient(135deg, #e0f2fe, #38bdf8);
+            color: #0c4a6e;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .state-badge {
+            background: linear-gradient(135deg, #f0f9ff, #0ea5e9);
+            color: #0c4a6e;
+        }
+        
+        .region-badge {
+            background: linear-gradient(135deg, #f0fdf4, #22c55e);
+            color: #14532d;
+        }
+
+        .analytics-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .analytics-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #6366f1;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+        }
+
+        .kpi-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        .comparison-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-delivered {
+            background: linear-gradient(135deg, #d1fae5, #10b981);
+            color: #065f46;
+        }
+
+        /* Enhanced Print Styles - COMPACT VERSION */
+        @media print {
+            .sidebar, .dashboard-header, .card-header, .btn, 
+            .quick-date-btn, .stats-grid, .alert, .modal,
+            .nav, .navbar, .main-content .btn-group,
+            .analytics-card, .kpi-card, .chart-container,
+            .card .btn-group, .dropdown,
+            /* HIDE DATE RANGE SECTION COMPLETELY IN PRINT */
+            .card:has(.fa-calendar-alt) {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin: 0 !important;
+                padding: 5px !important;
+                width: 100% !important;
+            }
+            
+            /* Compact Header */
+            .print-header {
+                display: block !important;
+                text-align: center;
+                border-bottom: 1px solid #333;
+                padding-bottom: 3px !important;
+                margin-bottom: 5px !important;
+                page-break-after: avoid;
+            }
+            
+            .print-header h2 {
+                margin: 0;
+                font-size: 14px;
+                font-weight: bold;
+                line-height: 1.1;
+            }
+            
+            .print-header .print-date {
+                font-size: 10px;
+                color: #666;
+                margin-top: 1px;
+            }
+            
+            /* Compact Summary */
+            .print-summary {
+                display: flex !important;
+                justify-content: space-around;
+                background: #f8f9fa;
+                padding: 4px !important;
+                margin-bottom: 6px !important;
+                border: 1px solid #dee2e6;
+                font-size: 10px;
+                page-break-after: avoid;
+            }
+            
+            .print-summary div {
+                text-align: center;
+                flex: 1;
+            }
+            
+            .print-summary .number {
+                font-weight: bold;
+                font-size: 11px;
+                color: #000;
+            }
+            
+            /* Compact Tables */
+            .table {
+                font-size: 9px !important;
+                margin-bottom: 6px !important;
+                page-break-inside: avoid;
+            }
+            
+            .table th, .table td {
+                padding: 2px 3px !important;
+                line-height: 1.1;
+            }
+            
+            .table thead th {
+                background: #f8f9fa !important;
+                color: #000 !important;
+                border: 1px solid #dee2e6 !important;
+                font-weight: 600;
+                font-size: 9px;
+            }
+            
+            .table tbody td {
+                border: 1px solid #dee2e6 !important;
+            }
+            
+            /* Compact Cards */
+            .card {
+                border: 1px solid #dee2e6 !important;
+                box-shadow: none !important;
+                margin-bottom: 6px !important;
+                page-break-inside: avoid;
+            }
+            
+            .card-body {
+                padding: 6px !important;
+            }
+            
+            /* Remove decorative elements */
+            .location-badge, .state-badge, .region-badge,
+            .status-badge, .badge {
+                background: none !important;
+                color: #000 !important;
+                border: 1px solid #666 !important;
+                padding: 1px 2px !important;
+                font-size: 8px !important;
+            }
+            
+            .table-responsive {
+                page-break-inside: avoid;
+            }
+            
+            /* Body and container optimizations */
+            body {
+                font-size: 9px;
+                line-height: 1.1;
+                background: white !important;
+                color: black !important;
+            }
+            
+            .container-fluid {
+                padding: 0 !important;
+            }
+            
+            .row {
+                margin: 0 !important;
+            }
+            
+            .col-md-9, .col-lg-10 {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+            
+            /* Hide all charts and analytics sections */
+            canvas, .chart-container, .analytics-section,
+            .performance-metrics, .business-insights {
+                display: none !important;
+            }
+            
+            /* Compact performance metrics for print */
+            .compact-metrics {
+                display: block !important;
+                page-break-after: avoid;
+            }
+            
+            .compact-metrics .row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 3px;
+            }
+            
+            .compact-metrics .metric-item {
+                text-align: center;
+                flex: 1;
+                padding: 2px;
+                border: 1px solid #dee2e6;
+                margin: 0 1px;
+                font-size: 9px;
+            }
+            
+            .compact-metrics .metric-value {
+                font-weight: bold;
+                font-size: 10px;
+                color: #000;
+            }
+        }
+
+        .print-header {
+            display: none;
+        }
+        
+        .print-summary {
+            display: none;
+        }
+        
+        .compact-metrics {
+            display: none;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Print Header (only shows when printing) -->
+                <div class="print-header">
+                    <h2>تقرير المحاسبة - الطلبات المسلمة</h2>
+                    <div class="print-date">
+                        الفترة: {{ start_date }} إلى {{ end_date }}
+                    </div>
+                </div>
+
+                <!-- Print Summary (only shows when printing) -->
+                {% if delivered_orders %}
+                <div class="print-summary">
+                    <div>
+                        <div class="number">{{ total_orders }}</div>
+                        <div>الطلبات</div>
+                    </div>
+                    <div>
+                        <div class="number">{{ "{:,.0f}".format(total_revenue) }}</div>
+                        <div>الإيرادات</div>
+                    </div>
+                    <div>
+                        <div class="number">{{ "{:,.0f}".format(average_order_value) }}</div>
+                        <div>متوسط الطلب</div>
+                    </div>
+                    <div>
+                        <div class="number">
+                            {% if total_orders > 0 %}
+                                {{ (delivered_orders|selectattr('user_state')|list|length / total_orders * 100)|round(1) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </div>
+                        <div>موثقة الموقع</div>
+                    </div>
+                </div>
+
+                <!-- Compact Metrics for Print -->
+                <div class="compact-metrics">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="metric-item">
+                                    <div class="metric-value">
+                                        {% if delivered_orders %}
+                                            {{ (delivered_orders|length / 30)|round(1) }}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </div>
+                                    <div>طلبات/يوم</div>
+                                </div>
+                                <div class="metric-item">
+                                    {% set unique_customers = [] %}
+                                    {% for order in delivered_orders %}
+                                        {% if order.user_phone and order.user_phone not in unique_customers %}
+                                            {% set _ = unique_customers.append(order.user_phone) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    <div class="metric-value">{{ unique_customers|length }}</div>
+                                    <div>عملاء فريدون</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">
+                                        {% if unique_customers|length > 0 %}
+                                            {{ (total_orders / unique_customers|length)|round(1) }}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </div>
+                                    <div>متوسط طلبات/عميل</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h2 fw-bold"><i class="fas fa-chart-line me-2"></i>لوحة التحكم المالية</h1>
+                            <p class="text-muted mb-0">تحليلات متقدمة للأداء المالي والمبيعات</p>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary" onclick="printAccountingReport()">
+                                <i class="fas fa-print me-2"></i>طباعة التقرير
+                            </button>
+                            <a href="/reports" class="btn btn-primary ms-2">
+                                <i class="fas fa-chart-bar me-2"></i>التقارير المتقدمة
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Date Range Selector - WILL BE HIDDEN IN PRINT -->
+                <div class="card compact-section">
+                    <div class="card-header">
+                        <i class="fas fa-calendar-alt me-2"></i> تحديد الفترة الزمنية
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" action="/accounting" class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">من تاريخ</label>
+                                <input type="date" class="form-control" name="start_date" value="{{ start_date }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">إلى تاريخ</label>
+                                <input type="date" class="form-control" name="end_date" value="{{ end_date }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">فترات سريعة</label>
+                                <div class="d-flex flex-wrap">
+                                    <button type="button" class="quick-date-btn" onclick="setDateRange('today')">اليوم</button>
+                                    <button type="button" class="quick-date-btn" onclick="setDateRange('week')">هذا الأسبوع</button>
+                                    <button type="button" class="quick-date-btn" onclick="setDateRange('month')">هذا الشهر</button>
+                                    <button type="button" class="quick-date-btn" onclick="setDateRange('last_month')">الشهر الماضي</button>
+                                    <button type="button" class="quick-date-btn" onclick="setDateRange('last_3_months')">آخر 3 أشهر</button>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>عرض التحليلات
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Key Performance Indicators -->
+                <div class="row compact-section">
+                    <div class="col-md-3 mb-4">
+                        <div class="kpi-card">
+                            <div class="kpi-number text-primary">{{ total_orders }}</div>
+                            <div class="kpi-label">الطلبات المسلمة</div>
+                            <div class="mt-2">
+                                <span class="badge comparison-badge bg-success">
+                                    <i class="fas fa-trend-up me-1"></i> نشاط
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="kpi-card">
+                            <div class="kpi-number" style="color: #8b5cf6;">{{ "{:,.0f}".format(total_revenue) }}</div>
+                            <div class="kpi-label">إجمالي الإيرادات</div>
+                            <div class="mt-2">
+                                <span class="badge comparison-badge bg-success">
+                                    <i class="fas fa-dollar-sign me-1"></i> إيرادات
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="kpi-card">
+                            <div class="kpi-number text-info">{{ "{:,.0f}".format(average_order_value) }}</div>
+                            <div class="kpi-label">متوسط قيمة الطلب</div>
+                            <div class="mt-2">
+                                <span class="badge comparison-badge bg-info">
+                                    <i class="fas fa-chart-line me-1"></i> متوسط
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="kpi-card">
+                            <div class="kpi-number text-success">
+                                {% if total_orders > 0 %}
+                                    {{ (delivered_orders|selectattr('user_state')|list|length / total_orders * 100)|round(1) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </div>
+                            <div class="kpi-label">طلبات موثقة الموقع</div>
+                            <div class="mt-2">
+                                <span class="badge comparison-badge bg-warning">
+                                    <i class="fas fa-map-marker-alt me-1"></i> مواقع
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivered Orders Table -->
+                <div class="card compact-section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-list me-2"></i> الطلبات المسلمة</span>
+                        <div>
+                            <span class="badge bg-success me-2">{{ delivered_orders|length }} طلب</span>
+                            <span class="badge bg-primary">{{ "{:,.0f}".format(total_revenue) }} إجمالي الإيرادات</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if delivered_orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>رقم الطلب</th>
+                                        <th>العميل</th>
+                                        <th>الهاتف</th>
+                                        <th>المحافظة</th>
+                                        <th>المنطقة</th>
+                                        <th>التاريخ</th>
+                                        <th>المبلغ</th>
+                                        <th>الحالة</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in delivered_orders %}
+                                    <tr>
+                                        <td><strong>#{{ order.id }}</strong></td>
+                                        <td>
+                                            <div class="fw-bold">{{ order.user_name }}</div>
+                                            <small class="text-muted">{{ order.user_phone }}</small>
+                                        </td>
+                                        <td>{{ order.user_phone }}</td>
+                                        <td>
+                                            {% if order.user_state %}
+                                                <span class="location-badge state-badge">{{ order.user_state }}</span>
+                                            {% else %}
+                                                <span class="text-muted">---</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if order.user_region %}
+                                                <span class="location-badge region-badge">{{ order.user_region }}</span>
+                                                {% else %}
+                                                <span class="text-muted">---</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ order.order_date[:10] }}</td>
+                                        <td><span class="fw-bold text-success">{{ "{:,.0f}".format(order.total_amount) }}</span></td>
+                                        <td>
+                                            <span class="status-badge status-delivered">تم التوصيل</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary view-order" 
+                                                        data-order-id="{{ order.id }}"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#orderModal">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <a href="/print_invoice/{{ order.id }}" class="btn btn-outline-info" target="_blank">
+                                                    <i class="fas fa-receipt"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد طلبات مسلمة في الفترة المحددة</p>
+                            <p class="text-muted small">الرجاء اختيار فترة زمنية أخرى</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Analytics Charts -->
+                <div class="row compact-section analytics-section">
+                    <div class="col-md-8">
+                        <div class="card analytics-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-chart-bar me-2"></i> توزيع المبيعات حسب المحافظة</span>
+                                <select class="form-select form-select-sm" id="chartMetric" style="width: auto;" onchange="updateCharts()">
+                                    <option value="revenue">حسب الإيرادات</option>
+                                    <option value="orders">حسب عدد الطلبات</option>
+                                </select>
+                            </div>
+                            <div class="card-body chart-container">
+                                {% if delivered_orders and delivered_orders|selectattr('user_state')|list|length > 0 %}
+                                <canvas id="salesChart" height="250"></canvas>
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">لا توجد بيانات جغرافية لعرض الرسوم البيانية</p>
+                                    <p class="text-muted small">الطلبات المسلمة لا تحتوي على معلومات المحافظة</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card analytics-card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-map-marked-alt me-2"></i> توزيع جغرافي
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    {% set states = {} %}
+                                    {% for order in delivered_orders %}
+                                        {% if order.user_state %}
+                                            {% set state = order.user_state %}
+                                            {% if state not in states %}
+                                                {% set _ = states.update({state: {'count': 1, 'revenue': order.total_amount}}) %}
+                                            {% else %}
+                                                {% set _ = states.update({state: {'count': states[state].count + 1, 'revenue': states[state].revenue + order.total_amount}}) %}
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% for state, data in states.items() %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong class="d-block">{{ state }}</strong>
+                                            <small class="text-muted">{{ data.count }} طلب</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-primary rounded-pill">{{ data.count }}</span>
+                                            <br>
+                                            <small class="text-success">{{ "{:,.0f}".format(data.revenue) }}</small>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-map fa-2x text-muted mb-3"></i>
+                                        <p class="text-muted">لا توجد بيانات جغرافية</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="row compact-section performance-metrics">
+                    <div class="col-md-6">
+                        <div class="card analytics-card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-tachometer-alt me-2"></i> مؤشرات الأداء
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6 mb-3">
+                                        <div class="border rounded p-3">
+                                            <div class="fw-bold text-primary fs-4">
+                                                {% if delivered_orders %}
+                                                    {{ (delivered_orders|length / 30)|round(1) }}
+                                                {% else %}
+                                                    0
+                                                {% endif %}
+                                            </div>
+                                            <small>متوسط الطلبات/يوم</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="border rounded p-3">
+                                            <div class="fw-bold text-success fs-4">
+                                                {% set unique_customers = [] %}
+                                                {% for order in delivered_orders %}
+                                                    {% if order.user_phone and order.user_phone not in unique_customers %}
+                                                        {% set _ = unique_customers.append(order.user_phone) %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {{ unique_customers|length }}
+                                            </div>
+                                            <small>عملاء فريدون</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="border rounded p-3">
+                                            <div class="fw-bold text-info fs-4">
+                                                {% if unique_customers|length > 0 %}
+                                                    {{ (total_orders / unique_customers|length)|round(1) }}
+                                                {% else %}
+                                                    0
+                                                {% endif %}
+                                            </div>
+                                            <small>متوسط طلبات/عميل</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="border rounded p-3">
+                                            <div class="fw-bold text-warning fs-4">
+                                                {% set peak_day = {} %}
+                                                {% for order in delivered_orders %}
+                                                    {% set day = order.order_date[:10] %}
+                                                    {% if day not in peak_day %}
+                                                        {% set _ = peak_day.update({day: 1}) %}
+                                                    {% else %}
+                                                        {% set _ = peak_day.update({day: peak_day[day] + 1}) %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if peak_day %}
+                                                    {{ peak_day.values()|max }}
+                                                {% else %}
+                                                    0
+                                                {% endif %}
+                                            </div>
+                                            <small>أعلى طلبات/يوم</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card analytics-card h-100">
+                            <div class="card-header">
+                                <i class="fas fa-chart-pie me-2"></i> تحليل القيمة
+                            </div>
+                            <div class="card-body chart-container">
+                                {% if delivered_orders %}
+                                <canvas id="valueChart" height="200"></canvas>
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">لا توجد بيانات لعرض تحليل القيمة</p>
+                                </div>
+                                {% endif %}
+                                <div class="mt-3">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="border rounded p-2">
+                                                <div class="fw-bold text-success">
+                                                    {% if delivered_orders %}
+                                                        {{ (delivered_orders|selectattr('total_amount', '>=', average_order_value)|list|length / total_orders * 100)|round(1) }}%
+                                                    {% else %}
+                                                        0%
+                                                    {% endif %}
+                                                </div>
+                                                <small>طلبات فوق المتوسط</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="border rounded p-2">
+                                                <div class="fw-bold text-warning">
+                                                    {% if delivered_orders %}
+                                                        {{ (delivered_orders|selectattr('total_amount', '>=', average_order_value * 1.5)|list|length / total_orders * 100)|round(1) }}%
+                                                    {% else %}
+                                                        0%
+                                                    {% endif %}
+                                                </div>
+                                                <small>طلبات عالية القيمة</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="border rounded p-2">
+                                                <div class="fw-bold text-info">
+                                                    {% set repeat_customers = [] %}
+                                                    {% set customer_orders = {} %}
+                                                    {% for order in delivered_orders %}
+                                                        {% if order.user_phone %}
+                                                            {% if order.user_phone not in customer_orders %}
+                                                                {% set _ = customer_orders.update({order.user_phone: 1}) %}
+                                                            {% else %}
+                                                                {% set _ = customer_orders.update({order.user_phone: customer_orders[order.user_phone] + 1}) %}
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    {% for phone, count in customer_orders.items() %}
+                                                        {% if count > 1 %}
+                                                            {% set _ = repeat_customers.append(phone) %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    {{ (repeat_customers|length / unique_customers|length * 100)|round(1) if unique_customers|length > 0 else 0 }}%
+                                                </div>
+                                                <small>عملاء مكررون</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Insights -->
+                {% if delivered_orders %}
+                <div class="card compact-section business-insights">
+                    <div class="card-header">
+                        <i class="fas fa-lightbulb me-2"></i> رؤى واستنتاجات
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-chart-line me-2"></i> أداء المبيعات</h6>
+                                    <p class="mb-0">
+                                        {% if total_orders > 10 %}
+                                            أداء قوي! {{ total_orders }} طلب مسلم مع إيرادات {{ "{:,.0f}".format(total_revenue) }}
+                                        {% elif total_orders > 5 %}
+                                            أداء جيد! {{ total_orders }} طلبات مسلمة في هذه الفترة
+                                        {% else %}
+                                            هناك مجال لتحسين المبيعات في هذه الفترة
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-users me-2"></i> تحليل العملاء</h6>
+                                    <p class="mb-0">
+                                        {% set repeat_rate = (repeat_customers|length / unique_customers|length * 100)|round(1) if unique_customers|length > 0 else 0 %}
+                                        {% if repeat_rate > 30 %}
+                                            نسبة ولاء عالية! {{ repeat_rate }}% من العملاء مكررون
+                                        {% else %}
+                                            فرصة لزيادة ولاء العملاء
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-shopping-bag"></i> تفاصيل الطلب #<span id="modalOrderId"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="orderDetails">
+                    <div class="text-center py-4">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">جاري تحميل تفاصيل الطلب...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let salesChart, valueChart;
+
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+
+        function initializeCharts() {
+            // Sales by State Chart
+            const salesCtx = document.getElementById('salesChart');
+            if (salesCtx) {
+                // Prepare data for sales chart
+                const stateData = {};
+                
+                // Get data from the page (we'll use the data from the geographic distribution list)
+                const stateElements = document.querySelectorAll('.list-group-item');
+                stateElements.forEach(element => {
+                    const stateName = element.querySelector('strong').textContent.trim();
+                    const countText = element.querySelector('.badge').textContent.trim();
+                    const revenueText = element.querySelector('.text-success').textContent.trim();
+                    
+                    const count = parseInt(countText) || 0;
+                    const revenue = parseInt(revenueText.replace(/,/g, '')) || 0;
+                    
+                    if (stateName && stateName !== 'لا توجد بيانات جغرافية') {
+                        stateData[stateName] = {
+                            count: count,
+                            revenue: revenue
+                        };
+                    }
+                });
+
+                const states = Object.keys(stateData);
+                
+                if (states.length > 0) {
+                    const orderCounts = states.map(state => stateData[state].count);
+                    const revenues = states.map(state => stateData[state].revenue);
+                    
+                    salesChart = new Chart(salesCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: states,
+                            datasets: [{
+                                label: 'الإيرادات',
+                                data: revenues,
+                                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                                borderColor: 'rgba(99, 102, 241, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: {
+                                    display: true,
+                                    title: {
+                                        display: true,
+                                        text: 'المحافظات'
+                                    }
+                                },
+                                y: {
+                                    display: true,
+                                    title: {
+                                        display: true,
+                                        text: 'الإيرادات'
+                                    },
+                                    beginAtZero: true
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    rtl: true
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Value Distribution Chart
+            const valueCtx = document.getElementById('valueChart');
+            if (valueCtx) {
+                // Calculate distribution from the performance metrics
+                const aboveAvgElement = document.querySelector('.border.rounded.p-2 .text-success');
+                const highValueElement = document.querySelectorAll('.border.rounded.p-2 .text-warning')[1];
+                
+                let aboveAvgPercent = 0;
+                let highValuePercent = 0;
+                
+                if (aboveAvgElement) {
+                    aboveAvgPercent = parseFloat(aboveAvgElement.textContent) || 0;
+                }
+                if (highValueElement) {
+                    highValuePercent = parseFloat(highValueElement.textContent) || 0;
+                }
+                
+                // For demo purposes, create sample data based on percentages
+                const totalOrders = {{ total_orders|default(0) }};
+                const lowValue = totalOrders > 0 ? Math.round(totalOrders * (100 - aboveAvgPercent - highValuePercent) / 100) : 0;
+                const mediumValue = totalOrders > 0 ? Math.round(totalOrders * aboveAvgPercent / 100) : 0;
+                const highValue = totalOrders > 0 ? Math.round(totalOrders * highValuePercent / 100) : 0;
+                
+                valueChart = new Chart(valueCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['منخفضة القيمة', 'متوسطة القيمة', 'عالية القيمة'],
+                        datasets: [{
+                            data: [lowValue, mediumValue, highValue],
+                            backgroundColor: [
+                                'rgba(239, 68, 68, 0.8)',
+                                'rgba(249, 115, 22, 0.8)',
+                                'rgba(34, 197, 94, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(239, 68, 68, 1)',
+                                'rgba(249, 115, 22, 1)',
+                                'rgba(34, 197, 94, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                rtl: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateCharts() {
+            const metric = document.getElementById('chartMetric').value;
+            
+            if (salesChart) {
+                // Get updated data from the geographic distribution
+                const stateData = {};
+                const stateElements = document.querySelectorAll('.list-group-item');
+                
+                stateElements.forEach(element => {
+                    const stateName = element.querySelector('strong').textContent.trim();
+                    const countText = element.querySelector('.badge').textContent.trim();
+                    const revenueText = element.querySelector('.text-success').textContent.trim();
+                    
+                    const count = parseInt(countText) || 0;
+                    const revenue = parseInt(revenueText.replace(/,/g, '')) || 0;
+                    
+                    if (stateName && stateName !== 'لا توجد بيانات جغرافية') {
+                        stateData[stateName] = {
+                            count: count,
+                            revenue: revenue
+                        };
+                    }
+                });
+
+                const states = Object.keys(stateData);
+                
+                if (states.length > 0) {
+                    if (metric === 'orders') {
+                        const orderCounts = states.map(state => stateData[state].count);
+                        salesChart.data.datasets[0].data = orderCounts;
+                        salesChart.data.datasets[0].label = 'عدد الطلبات';
+                        salesChart.options.scales.y.title.text = 'عدد الطلبات';
+                    } else {
+                        const revenues = states.map(state => stateData[state].revenue);
+                        salesChart.data.datasets[0].data = revenues;
+                        salesChart.data.datasets[0].label = 'الإيرادات';
+                        salesChart.options.scales.y.title.text = 'الإيرادات';
+                    }
+                    
+                    salesChart.update();
+                }
+            }
+        }
+
+        // Quick date range functions
+        function setDateRange(range) {
+            const today = new Date();
+            let startDate, endDate;
+            
+            switch(range) {
+                case 'today':
+                    startDate = today.toISOString().split('T')[0];
+                    endDate = startDate;
+                    break;
+                case 'week':
+                    startDate = new Date(today.setDate(today.getDate() - today.getDay())).toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+                case 'last_month':
+                    startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
+                    endDate = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0];
+                    break;
+                case 'last_3_months':
+                    startDate = new Date(today.getFullYear(), today.getMonth() - 3, 1).toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+            }
+            
+            document.querySelector('input[name="start_date"]').value = startDate;
+            document.querySelector('input[name="end_date"]').value = endDate;
+        }
+
+        // Order details loading
+        document.querySelectorAll('.view-order').forEach(button => {
+            button.addEventListener('click', function() {
+                const orderId = this.dataset.orderId;
+                loadOrderDetails(orderId);
+            });
+        });
+
+        function loadOrderDetails(orderId) {
+            const modalBody = document.getElementById('orderDetails');
+            modalBody.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="loading-spinner"></div>
+                    <p class="text-muted mt-2">جاري تحميل تفاصيل الطلب...</p>
+                </div>
+            `;
+
+            document.getElementById('modalOrderId').textContent = orderId;
+
+            fetch(`/api/order/${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const order = data.order;
+                        let itemsHtml = '';
+                        
+                        if (order.items && Array.isArray(order.items)) {
+                            order.items.forEach(item => {
+                                const itemTotal = (item.price || 0) * (item.quantity || 0);
+                                
+                                itemsHtml += `
+                                    <div class="order-item p-3 mb-3 border rounded">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <strong class="fs-6">${item.name || 'غير معروف'}</strong>
+                                            <span class="text-success fw-bold">${Math.round(itemTotal).toLocaleString('en-US')}</span>
+                                        </div>
+                                        <div class="row text-muted small">
+                                            <div class="col-md-6">
+                                                <span>السعر: ${Math.round(item.price || 0).toLocaleString('en-US')}</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <span>الكمية: ${item.quantity || 0}</span>
+                                            </div>
+                                            ${item.size ? `<div class="col-md-6"><span>المقاس: ${item.size}</span></div>` : ''}
+                                            ${item.color ? `<div class="col-md-6"><span>اللون: ${item.color}</span></div>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                        }
+
+                        modalBody.innerHTML = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-card p-3 border rounded mb-3">
+                                        <h6 class="fw-bold mb-3"><i class="fas fa-user me-2"></i>معلومات العميل</h6>
+                                        <p><strong>الاسم:</strong> ${order.user_name || 'غير معروف'}</p>
+                                        <p><strong>الهاتف:</strong> ${order.user_phone || 'غير معروف'}</p>
+                                        <p><strong>العنوان:</strong> ${order.user_address || 'غير معروف'}</p>
+                                        <p><strong>المحافظة:</strong> ${order.user_state || 'غير محدد'}</p>
+                                        <p><strong>المنطقة:</strong> ${order.user_region || 'غير محدد'}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-card p-3 border rounded mb-3">
+                                        <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>معلومات الطلب</h6>
+                                        <p><strong>التاريخ:</strong> ${order.order_date || 'غير معروف'}</p>
+                                        <p><strong>الحالة:</strong> <span class="status-badge status-delivered">${order.status || 'تم التوصيل'}</span></p>
+                                        <p><strong>المجموع:</strong> <span class="fw-bold text-success fs-5">${Math.round(order.total_amount || 0).toLocaleString('en-US')}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <h6 class="fw-bold mb-3"><i class="fas fa-list me-2"></i>العناصر المطلوبة</h6>
+                            ${itemsHtml || '<p class="text-muted text-center">لا توجد عناصر</p>'}
+                        `;
+                    } else {
+                        modalBody.innerHTML = `
+                            <div class="alert alert-danger text-center">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                ${data.message || 'لم يتم العثور على تفاصيل الطلب'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    modalBody.innerHTML = `
+                        <div class="alert alert-danger text-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            حدث خطأ في تحميل تفاصيل الطلب
+                        </div>
+                    `;
+                });
+        }
+
+        function printAccountingReport() {
+            window.print();
+        }
+
+        // Set default dates to current month if not set
+        document.addEventListener('DOMContentLoaded', function() {
+            const startDateInput = document.querySelector('input[name="start_date"]');
+            const endDateInput = document.querySelector('input[name="end_date"]');
+            
+            if (!startDateInput.value) {
+                const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+                startDateInput.value = firstDay.toISOString().split('T')[0];
+            }
+            
+            if (!endDateInput.value) {
+                endDateInput.value = new Date().toISOString().split('T')[0];
+            }
+        });
+    </script>
+</body>
+</html>

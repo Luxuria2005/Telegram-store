@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعديل المنتج - لوحة التحكم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="/static/dashboard.css" rel="stylesheet">
+    <style>
+        .compact-form {
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .product-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .variant-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        .variant-table th {
+            background: #f8f9fa;
+            padding: 8px 4px;
+            border: 1px solid #dee2e6;
+            font-weight: 600;
+            text-align: center;
+        }
+        .variant-table td {
+            padding: 4px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .size-input {
+            width: 60px;
+            text-align: center;
+            padding: 4px;
+            font-size: 0.85rem;
+        }
+        .color-row {
+            background: #f8fafc;
+        }
+        .image-preview {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+        .form-compact {
+            padding: 8px;
+        }
+        .form-compact .form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .form-compact .form-control {
+            padding: 6px 8px;
+            font-size: 0.85rem;
+        }
+        .btn-compact {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        .current-category-badge {
+            background: #198754;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        /* NEW: Style for existing size inputs */
+        .existing-size {
+            background-color: #f8f9fa;
+        }
+        .new-size {
+            background-color: #e8f5e8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'sidebar.html' %}
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 fw-bold"><i class="fas fa-edit me-2"></i>تعديل المنتج</h1>
+                            <p class="text-muted mb-0">تعديل بيانات المنتج: {{ product.name }}</p>
+                        </div>
+                        <a href="/products" class="btn btn-outline-primary btn-compact">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            العودة
+                        </a>
+                    </div>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="compact-form">
+                    <!-- Edit Product Form -->
+                    <div class="card">
+                        <div class="card-header bg-success text-white py-2">
+                            <i class="fas fa-edit"></i>
+                            تعديل المنتج
+                        </div>
+                        <div class="card-body form-compact">
+                            <form method="POST" action="/update_product" enctype="multipart/form-data" id="productForm">
+                                <input type="hidden" name="product_id" value="{{ product.id }}">
+                                <input type="hidden" name="category" value="{{ category }}">
+                                <input type="hidden" name="variant_count" id="variantCount" value="0">
+                                
+                                <!-- Product Basic Information -->
+                                <div class="product-header">
+                                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>المعلومات الأساسية</h5>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-2">
+                                            <label class="form-label">الفئة الحالية</label>
+                                            <div class="current-category-badge">
+                                                <i class="fas fa-folder me-2"></i>{{ category }}
+                                            </div>
+                                            <div class="form-text text-muted mt-1">لا يمكن تغيير الفئة بعد إنشاء المنتج</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-2">
+                                            <label class="form-label">اسم المنتج</label>
+                                            <input type="text" class="form-control" name="name" value="{{ product.name }}" required placeholder="أدخل اسم المنتج" id="productName">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-2">
+                                            <label class="form-label">رقم الموديل</label>
+                                            <input type="text" class="form-control" name="model_number" value="{{ product.model_number or '' }}" placeholder="أدخل رقم الموديل">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <label class="form-label">السعر</label>
+                                            <input type="number" step="0.01" class="form-control" name="price" value="{{ product.price }}" required placeholder="أدخل السعر" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <label class="form-label">الوصف</label>
+                                            <textarea class="form-control" name="description" rows="2" placeholder="أدخل وصف المنتج">{{ product.description or '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Variants Section - Spreadsheet Style -->
+                                <div class="product-header mt-3">
+                                    <h5 class="mb-0"><i class="fas fa-palette me-2"></i>الألوان والمقاسات</h5>
+                                </div>
+
+                                <div class="alert alert-info py-2">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>ملاحظة:</strong> يمكنك تعديل الكميات للألوان الحالية أو إضافة مقاسات جديدة. كل لون يحتاج إلى صورة واحدة فقط.
+                                </div>
+
+                                <div id="colorVariantsContainer">
+                                    <!-- Color variants will be added here -->
+                                </div>
+
+                                <div class="text-center mt-2">
+                                    <button type="button" class="btn btn-success btn-compact" onclick="addColorVariant()">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        إضافة لون جديد
+                                    </button>
+                                </div>
+
+                                <div class="alert alert-warning mt-3 py-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    يجب إضافة لون واحد على الأقل مع مقاساته للمنتج
+                                </div>
+                                
+                                <div class="d-grid gap-2 mt-3">
+                                    <button type="submit" class="btn btn-primary py-2" id="submitBtn">
+                                        <i class="fas fa-save me-2"></i>
+                                        حفظ التغييرات
+                                    </button>
+                                    <a href="/products" class="btn btn-outline-secondary btn-compact">
+                                        <i class="fas fa-times me-2"></i>
+                                        إلغاء والعودة
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let colorCounter = 0;
+        const sizes = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+        
+        // NEW: Store existing variants to prevent duplicates
+        const processedVariants = new Set();
+        
+        // Load existing variants when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for variant in product.variants %}
+            addExistingVariant("{{ variant.color }}", "{{ variant.size }}", {{ variant.quantity }}, "{{ variant.image_path or '' }}");
+            {% endfor %}
+            updateSubmitButton();
+        });
+
+        function addExistingVariant(color, size, quantity, imagePath) {
+            const container = document.getElementById('colorVariantsContainer');
+            const colorId = colorCounter++;
+            
+            // Create unique identifier for this variant
+            const variantKey = `${color}_${size}`;
+            
+            // Check if this color already exists
+            const existingColorCards = container.querySelectorAll('.color-variant-card');
+            let existingCard = null;
+            
+            for (let card of existingColorCards) {
+                const colorInput = card.querySelector('.color-name');
+                if (colorInput && colorInput.value === color) {
+                    existingCard = card;
+                    break;
+                }
+            }
+            
+            if (existingCard) {
+                // Add size to existing color card - FIXED: Now properly adds the size
+                const existingColorId = existingCard.id.split('-')[1];
+                addSizeToColorCard(existingCard, size, quantity, true);
+            } else {
+                // Create new color card
+                const colorHtml = `
+                    <div class="card mb-3 color-variant-card" id="colorVariant-${colorId}">
+                        <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-palette me-2"></i>
+                                ${color}
+                            </h6>
+                            <button type="button" class="btn btn-danger btn-sm btn-compact" onclick="removeColorVariant(${colorId})">
+                                <i class="fas fa-times"></i> حذف
+                            </button>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label">اسم اللون</label>
+                                    <input type="text" class="form-control color-name" name="color_${colorId}" value="${color}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">صورة اللون</label>
+                                    <input type="file" class="form-control color-image" name="variant_images_${colorId}" accept="image/*" onchange="previewColorImage(this, ${colorId})">
+                                    ${imagePath ? `
+                                        <div class="form-text text-success">
+                                            <i class="fas fa-check-circle"></i> توجد صورة حالية للمنتج
+                                            <input type="hidden" name="existing_image_${colorId}" value="${imagePath}">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">معاينة</label>
+                                    <div class="image-preview-container" id="colorImagePreview-${colorId}">
+                                        ${imagePath ? `
+                                            <img src="{{ url_for('serve_product_image', filename='') }}${imagePath}" class="image-preview" alt="الصورة الحالية" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'text-muted\\'>خطأ في الصورة</div>'">
+                                        ` : `
+                                            <img src="https://via.placeholder.com/50x50/cccccc/969696?text=صورة" class="image-preview" alt="معاينة">
+                                        `}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">الكميات حسب المقاس:</label>
+                                    <button type="button" class="btn btn-outline-primary btn-sm btn-compact mt-1" onclick="addAllSizesToColor(${colorId})">
+                                        <i class="fas fa-plus me-1"></i> إضافة المقاسات المفقودة
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Compact Sizes Table -->
+                            <div class="table-responsive">
+                                <table class="variant-table">
+                                    <thead>
+                                        <tr>
+                                            ${sizes.map(s => `<th>${s}</th>`).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sizesTable-${colorId}">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.insertAdjacentHTML('beforeend', colorHtml);
+                addSizeToColorCard(document.getElementById(`colorVariant-${colorId}`), size, quantity, true);
+            }
+            
+            // Mark this variant as processed
+            processedVariants.add(variantKey);
+            document.getElementById('variantCount').value = colorCounter;
+        }
+
+        // FIXED: Function to add all sizes to a color WITHOUT losing existing quantities
+        function addAllSizesToColor(colorId) {
+            const colorCard = document.getElementById(`colorVariant-${colorId}`);
+            const sizesTable = document.getElementById(`sizesTable-${colorId}`);
+            
+            // Get current sizes and quantities
+            const currentSizes = new Map();
+            const existingSizeCells = sizesTable.querySelectorAll('td');
+            
+            existingSizeCells.forEach(cell => {
+                const sizeInput = cell.querySelector('input[type="hidden"]');
+                const quantityInput = cell.querySelector('.size-input');
+                if (sizeInput && quantityInput) {
+                    currentSizes.set(sizeInput.value, quantityInput.value);
+                }
+            });
+            
+            // Clear and recreate the table row
+            sizesTable.innerHTML = '<tr></tr>';
+            const sizeRow = sizesTable.querySelector('tr');
+            
+            // Add all sizes, preserving existing quantities
+            sizes.forEach((size, index) => {
+                const existingQuantity = currentSizes.get(size) || 0;
+                const isExisting = currentSizes.has(size);
+                
+                const sizeHtml = `
+                    <td>
+                        <input type="number" 
+                               class="form-control size-input ${isExisting ? 'existing-size' : 'new-size'}" 
+                               name="quantity_${colorId}_${index}" 
+                               value="${existingQuantity}" 
+                               min="0" 
+                               required
+                               placeholder="0">
+                        <input type="hidden" name="size_${colorId}_${index}" value="${size}">
+                    </td>
+                `;
+                
+                sizeRow.insertAdjacentHTML('beforeend', sizeHtml);
+            });
+        }
+
+        function addSizeToColorCard(colorCard, size, quantity, isExisting) {
+            const colorId = colorCard.id.split('-')[1];
+            const sizesTable = document.getElementById(`sizesTable-${colorId}`);
+            
+            // Create row if it doesn't exist
+            if (!sizesTable.querySelector('tr')) {
+                sizesTable.innerHTML = '<tr></tr>';
+            }
+            
+            const sizeRow = sizesTable.querySelector('tr');
+            
+            // Check if this size already exists in the row
+            const existingSizeCells = sizeRow.querySelectorAll('td');
+            let sizeExists = false;
+            
+            existingSizeCells.forEach(cell => {
+                const sizeInput = cell.querySelector('input[type="hidden"]');
+                if (sizeInput && sizeInput.value === size) {
+                    sizeExists = true;
+                    // Update quantity if needed
+                    const quantityInput = cell.querySelector('.size-input');
+                    if (quantityInput && quantityInput.value == 0 && quantity > 0) {
+                        quantityInput.value = quantity;
+                    }
+                }
+            });
+            
+            if (!sizeExists) {
+                const sizeIndex = sizeRow.children.length;
+                
+                const sizeHtml = `
+                    <td>
+                        <input type="number" 
+                               class="form-control size-input ${isExisting ? 'existing-size' : 'new-size'}" 
+                               name="quantity_${colorId}_${sizeIndex}" 
+                               value="${quantity}" 
+                               min="0" 
+                               required
+                               placeholder="0">
+                        <input type="hidden" name="size_${colorId}_${sizeIndex}" value="${size}">
+                    </td>
+                `;
+                
+                sizeRow.insertAdjacentHTML('beforeend', sizeHtml);
+            }
+        }
+
+        function addColorVariant() {
+            const container = document.getElementById('colorVariantsContainer');
+            const colorId = colorCounter++;
+            
+            const colorHtml = `
+                <div class="card mb-3 color-variant-card" id="colorVariant-${colorId}">
+                    <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-palette me-2"></i>
+                            لون جديد
+                        </h6>
+                        <button type="button" class="btn btn-danger btn-sm btn-compact" onclick="removeColorVariant(${colorId})">
+                            <i class="fas fa-times"></i> حذف
+                        </button>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="row mb-2">
+                            <div class="col-md-3">
+                                <label class="form-label">اسم اللون</label>
+                                <input type="text" class="form-control color-name" name="color_${colorId}" placeholder="أدخل اسم اللون" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">صورة اللون</label>
+                                <input type="file" class="form-control color-image" name="variant_images_${colorId}" accept="image/*" onchange="previewColorImage(this, ${colorId})">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">معاينة</label>
+                                <div class="image-preview-container" id="colorImagePreview-${colorId}">
+                                    <img src="https://via.placeholder.com/50x50/cccccc/969696?text=صورة" class="image-preview" alt="معاينة">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">الكميات حسب المقاس:</label>
+                                <button type="button" class="btn btn-outline-primary btn-sm btn-compact mt-1" onclick="addAllSizesToColor(${colorId})">
+                                    <i class="fas fa-plus me-1"></i> إضافة جميع المقاسات
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Compact Sizes Table -->
+                        <div class="table-responsive">
+                            <table class="variant-table">
+                                <thead>
+                                    <tr>
+                                        ${sizes.map(size => `<th>${size}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody id="sizesTable-${colorId}">
+                                    <tr>
+                                        <!-- Sizes will be added dynamically -->
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', colorHtml);
+            document.getElementById('variantCount').value = colorCounter;
+            updateSubmitButton();
+        }
+
+        function removeColorVariant(id) {
+            const element = document.getElementById(`colorVariant-${id}`);
+            if (element) {
+                element.remove();
+                document.getElementById('variantCount').value = --colorCounter;
+                updateSubmitButton();
+            }
+        }
+
+        function previewColorImage(input, colorId) {
+            const previewContainer = document.getElementById(`colorImagePreview-${colorId}`);
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewContainer.innerHTML = `<img src="${e.target.result}" class="image-preview" alt="معاينة الصورة">`;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const variantCount = document.getElementById('variantCount').value;
+            
+            if (variantCount > 0) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save me-2"></i> حفظ التغييرات';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> يرجى إضافة لون واحد على الأقل';
+            }
+        }
+
+        // Form validation
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            const variantCount = document.getElementById('variantCount').value;
+            const productName = document.getElementById('productName').value;
+            
+            if (!productName.trim()) {
+                e.preventDefault();
+                alert('يرجى إدخال اسم المنتج');
+                return false;
+            }
+            
+            if (variantCount == 0) {
+                e.preventDefault();
+                alert('يجب إضافة لون واحد على الأقل مع مقاساته للمنتج');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>
